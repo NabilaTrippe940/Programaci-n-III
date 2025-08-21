@@ -1,4 +1,4 @@
-import fs from "fs";
+import { readFile, writeFile } from "fs/promises";
 const API_URL = "https://fakestoreapi.com/products"; 
 
 // A) OPERACIONES CON FETCH
@@ -23,8 +23,8 @@ async function productosConLimites(limit = 10) {
     console.log(`\n[GET] ${limit} productos:`);
     console.log(data);
 
-    //  Persistir los datos de la consulta anterior en un archivo local JSON.
-    fs.writeFileSync("productos.json", JSON.stringify(data, null, 2));
+    // Persistir los datos de la consulta anterior en un archivo local JSON.
+    await writeFile("productos.json", JSON.stringify(data, null, 2));
     console.log(" Archivo productos.json creado con los datos limitados");
 
     return data;
@@ -106,15 +106,15 @@ async function modificarUnProducto(id) {
   }
 }
 
-// B) OPERACIONES CON FILESYSTEM
+// B) OPERACIONES CON FILESYSTEM (ASÍNCRONAS)
 
 // 1. Agregar producto al archivo local
-function agregarProductoAlArchivoLocal() {
+async function agregarProductoAlArchivoLocal() {
   try {
-    let data = JSON.parse(fs.readFileSync("productos.json", "utf8"));
+    let data = JSON.parse(await readFile("productos.json", "utf8"));
     const nuevo = { id: 999, title: "Abrigo de mujer", price: 250 };
     data.push(nuevo);
-    fs.writeFileSync("productos.json", JSON.stringify(data, null, 2));
+    await writeFile("productos.json", JSON.stringify(data, null, 2));
     console.log("\n[FS] Producto agregado al archivo local:", nuevo);
   } catch (error) {
     console.error(" Error al agregar producto al archivo:", error);
@@ -122,11 +122,11 @@ function agregarProductoAlArchivoLocal() {
 }
 
 // 2. Eliminar los productos superiores a un determinado valor
-function eliminarProductoConValorSuperior(limitPrice) {
+async function eliminarProductoConValorSuperior(limitPrice) {
   try {
-    let data = JSON.parse(fs.readFileSync("productos.json", "utf8"));
+    let data = JSON.parse(await readFile("productos.json", "utf8"));
     data = data.filter(p => p.price <= limitPrice);
-    fs.writeFileSync("productos.json", JSON.stringify(data, null, 2));
+    await writeFile("productos.json", JSON.stringify(data, null, 2));
     console.log(`\n[FS] Productos con precio <= ${limitPrice} guardados en archivo`);
   } catch (error) {
     console.error(" Error al eliminar productos caros del archivo:", error);
@@ -142,9 +142,8 @@ async function main() {
   await modificarUnProducto(9);
 
   // FileSystem
-  agregarProductoAlArchivoLocal();
-  eliminarProductoConValorSuperior(100); // Eliminar los productos con precio mayor a 100
+  await agregarProductoAlArchivoLocal();
+  await eliminarProductoConValorSuperior(100); // Eliminar los productos con precio mayor a 100
 }
 
 main();
-
