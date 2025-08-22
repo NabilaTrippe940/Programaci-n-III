@@ -41,6 +41,10 @@
     "price": 0.1,
     "description": "string",
     "category": "string",
-    "image": "http://example.com"
+    "image": "http://example.com",
+    "rating": {
+      "rate": 2.5,
+      "count": 8
+    }
   }
 ]

@@ -42,11 +42,14 @@ async function agregarProducto(producto) {
         const response = await fetch(urlApi, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(producto) // la API genera el id automáticamente
+            body: JSON.stringify(producto)
         });
         if (!response.ok) 
             throw new Error(`ERROR ${response.status}`);
         const nuevoProducto = await response.json();
+        
+        nuevoProducto.rating = producto.rating || { rate: 0, count: 0 };
+
         console.log(nuevoProducto);
         return nuevoProducto;
     } catch (error) {
@@ -101,6 +104,9 @@ async function modificarProductos(id, datosActualizados) {
             throw new Error(`ERROR ${response.status}`)
         }
         const productoActualizado = await response.json();
+
+        productoActualizado.rating = datosActualizados.rating || { rate: 0, count: 0 };
+
         console.log(productoActualizado);
         return productoActualizado;
     } catch (error) {
@@ -121,7 +127,8 @@ async function agregarProductoLocal(producto) {
             price: producto.price || 0.10,
             description: producto.description || "string",
             category: producto.category || "string",
-            image: producto.image || "http://example.com"
+            image: producto.image || "http://example.com",
+            rating: producto.rating || { rate: 0, count: 0 }
         };
         productos.push(productoCompleto);
         await fs.writeFile('productosLimitados.json', JSON.stringify(productos, null, 2));
@@ -161,7 +168,8 @@ async function eliminarProductosPorValor(productoValor) {
         price: 7.30,
         description: "string",
         category: "string",
-        image: "http://example.com"
+        image: "http://example.com",
+        rating: { rate: 4.5, count: 15 }
     });
 
     console.log("\nBuscar la Información de un Determinado Producto, Utilizando un “ID” Como Parámetro (GET).");
@@ -173,7 +181,8 @@ async function eliminarProductosPorValor(productoValor) {
         price: 99.9,
         description: "string",
         category: "string",
-        image: "http://example.com"
+        image: "http://example.com",
+        rating: { rate: 3.9, count: 50 }
     });
 
     console.log("\nEliminar un Producto (DELETE).");
@@ -186,7 +195,8 @@ async function eliminarProductosPorValor(productoValor) {
         price: 0.10,
         description: "string",
         category: "string",
-        image: "http://example.com"
+        image: "http://example.com",
+        rating: { rate: 2.5, count: 8 }
     });
 
     console.log("\nEliminar los Productos Superiores a un Determinado Valor.");
