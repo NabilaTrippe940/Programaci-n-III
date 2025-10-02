@@ -1,66 +1,73 @@
-<html>
+<!DOCTYPE html>
+<html lang="es">
 <head>
-  <meta charset="utf-8">
-  <title>Nueva Reserva</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      background-color: #f7f7f7;
-      margin: 0;
-      padding: 0;
-    }
-    .container {
-      max-width: 650px;
-      margin: 20px auto;
-      padding: 25px;
-      background-color: #ffffff;
-      border-radius: 10px;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-    }
-    header {
-      text-align: center;
-      padding-bottom: 15px;
-      border-bottom: 2px solid #e0e0e0;
-    }
-    header h1 {
-      margin: 0;
-      color: #03912e;
-    }
-    ul {
-      list-style-type: "📌 ";
-      padding-left: 20px;
-    }
-    li {
-      margin: 8px 0;
-      font-size: 16px;
-      color: #333;
-    }
-    footer {
-      text-align: center;
-      margin-top: 20px;
-      font-size: 13px;
-      color: #666;
-      border-top: 1px solid #e0e0e0;
-      padding-top: 10px;
-    }
-  </style>
+<meta charset="UTF-8">
+<title>Notificación de Reserva</title>
+<style>
+body {
+font-family: Arial, sans-serif;
+background-color: #f0f0f0;
+margin: 0;
+padding: 0;
+}
+.container {
+max-width: 600px;
+margin: 20px auto;
+background: #fff;
+padding: 20px;
+border-radius: 8px;
+border: 1px solid #ddd;
+}
+h1 {
+text-align: center;
+color: #4CAF50;
+}
+p {
+font-size: 15px;
+color: #333;
+}
+ul {
+padding-left: 18px;
+}
+li {
+margin: 6px 0;
+}
+.boton {
+display: inline-block;
+margin-top: 15px;
+padding: 10px 15px;
+background-color: #4CAF50;
+color: #fff;
+text-decoration: none;
+border-radius: 5px;
+}
+footer {
+margin-top: 20px;
+text-align: center;
+font-size: 12px;
+color: #666;
+border-top: 1px solid #ddd;
+padding-top: 10px;
+}
+</style>
 </head>
 <body>
-  <div class="container">
-    <header>
-      <h1>Reservas de Casas de Cumpleaños 🎉</h1>
-    </header>
+<div class="container">
+<h1>¡Nueva Reserva! 🎉</h1>
+<p>Se ha generado una nueva reserva con los siguientes datos:</p>
+<ul>
+<li><strong>Fecha:</strong> {{ fecha }}</li>
+<li><strong>Salón:</strong> {{ salon }}</li>
+<li><strong>Turno:</strong> {{ turno }}</li>
+</ul>
 
-    <h2>Notificación de nueva reserva</h2>
-    <ul>
-      <li><strong>Fecha de reserva:</strong> {{ fecha }}</li>
-      <li><strong>Salón:</strong> {{ salon }}</li>
-      <li><strong>Turno:</strong> {{ turno }}</li>
-    </ul>
 
-    <footer>
-      &copy; 2025 Reservas de Casas de Cumpleaños
-    </footer>
-  </div>
+<a href="{{ url_ver_reserva }}" class="boton">Ver reserva</a>
+
+
+<footer>
+© 2025 Reservas de Casas de Cumpleaños
+</footer>
+</div>
 </body>
 </html>
