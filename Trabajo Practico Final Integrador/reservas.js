@@ -11,12 +11,12 @@ const router = express.Router();
 router.post('/', async (req, res) => {
   const { fecha, salon, turno, correoDestino } = req.body;
   if (!fecha || !salon || !turno || !correoDestino)
-    return res.status(400).json({ ok: false, mensaje: 'ERROR: Faltan Datos Obligatorios.' });
+    return res.status(400).json({ ok: false, mensaje: 'ERROR: Faltan datos obligatorios.' });
 
   try {
     const [salonExiste] = await conexion.query('SELECT * FROM salones WHERE titulo=?', [salon]);
     if (salonExiste.length === 0)
-      return res.status(404).json({ ok: false, mensaje: 'ERROR: El Salón No Pudo Ser Encontrado.' });
+      return res.status(404).json({ ok: false, mensaje: 'ERROR: El salón no pudo ser encontrado.' });
 
     const __filename = fileURLToPath(import.meta.url);
     const __dirname = path.dirname(__filename);
@@ -44,12 +44,12 @@ router.post('/', async (req, res) => {
       html
     });
 
-    console.log(`Reserva Enviada a ${correoDestino} Para el Salón ${salon} el Día ${fecha} en Turno ${turno}.`);
-    res.json({ ok: true, mensaje: 'Correo Enviado Con Éxito.' });
+    console.log(`Reserva enviada a ${correoDestino} para el salón ${salon} el día ${fecha} en turno ${turno}.`);
+    res.json({ ok: true, mensaje: 'Correo enviado con éxito.' });
 
   } catch (err) {
     console.error(err);
-    res.status(500).json({ ok: false, mensaje: 'ERROR en el Sistema.' });
+    res.status(500).json({ ok: false, mensaje: 'ERROR en el sistema.' });
   }
 });
 
