@@ -146,7 +146,7 @@ export default class AuthControlador {
 
   obtenerUsuario = async (req, res) => {
     try {
-      const usuario_id = req.params.usuario_id;
+      const usuario_id = req.params.id;
       const user = await this.authServicio.findById(usuario_id);
       if (!user)
         return res
@@ -163,7 +163,7 @@ export default class AuthControlador {
 
   modificarUsuario = async (req, res) => {
     try {
-      const usuario_id = req.params.usuario_id;
+      const usuario_id = req.params.id;
       const datos = req.body;
 
       if (req.user.usuario_id != usuario_id && req.user.tipo_usuario !== "admin") {

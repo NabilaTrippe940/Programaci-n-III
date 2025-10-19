@@ -84,30 +84,47 @@ router.post("/login", (req, res) => authControlador.login(req, res));
 
 /**
  * @swagger
- * /auth/perfil:
+//  * /auth/usuarios/{id}:
  *   get:
- *     summary: Obtener perfil del usuario autenticado
+ *     summary: Obtener un usuario por ID
+ *     description: Retorna la información de un usuario según su ID. Requiere autenticación con token JWT.
  *     tags: [Auth]
  *     security:
  *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: ID del usuario
  *     responses:
  *       200:
- *         description: Datos del usuario autenticado
+ *         description: Usuario obtenido correctamente
+ *       404:
+ *         description: Usuario no encontrado
  *       401:
- *         description: Token inválido o ausente
+ *         description: Token invalido o ausente
  */
-router.get("/perfil", authenticateJWT, (req, res) =>
-  authControlador.obtenerPerfil(req, res)
+router.get("/usuarios/:id", authenticateJWT, (req, res) =>
+  authControlador.obtenerUsuario(req, res)
 );
 
 /**
  * @swagger
- * /auth/modificar:
+ * /auth/usuarios/{id}:
  *   put:
- *     summary: Modificar datos del usuario
+ *     summary: Modificar datos de un usuario por ID
  *     tags: [Auth]
  *     security:
  *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: ID del usuario a modificar
  *     requestBody:
  *       required: true
  *       content:
@@ -136,8 +153,10 @@ router.get("/perfil", authenticateJWT, (req, res) =>
  *         description: Usuario modificado correctamente
  *       400:
  *         description: Error en los datos enviados
+ *       401:
+ *         description: Token inválido
  */
-router.put("/modificar", authenticateJWT, (req, res) =>
+router.put("/usuarios/:id", authenticateJWT, (req, res) =>
   authControlador.modificarUsuario(req, res)
 );
 
