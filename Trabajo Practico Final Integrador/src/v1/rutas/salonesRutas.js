@@ -1,4 +1,6 @@
+//Src/V1/Rutas/SalonesRutas.js
 import express from "express";
+import { param, body, validationResult } from "express-validator";
 import SalonesControlador from "../../controladores/salonesControlador.js";
 import { authenticateJWT } from "../../middlewares/authenticateJWT.js";
 import { permit } from "../../middlewares/roles.js";
@@ -8,22 +10,28 @@ const salonesControlador = new SalonesControlador();
 
 /**
  * @swagger
- * tags:
- *   name: Salones
- *   description: Endpoints para la gestión de salones infantiles
- */
-
-/**
- * @swagger
  * /salones:
  *   get:
- *     summary: Obtener la lista de todos los salones
+ *     summary: Obtener todos los salones
  *     tags: [Salones]
  *     responses:
  *       200:
  *         description: Lista de salones obtenida correctamente
- *       500:
- *         description: Error al obtener los salones
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 type: object
+ *                 properties:
+ *                   salon_id: { type: integer, example: 1 }
+ *                   nombre: { type: string, example: "Salón Fiesta Feliz" }
+ *                   direccion: { type: string, example: "Calle Falsa 123" }
+ *                   capacidad: { type: integer, example: 50 }
+ *                   latitud: { type: number, example: -31.4167 }
+ *                   longitud: { type: number, example: -64.1833 }
+ *                   activo: { type: boolean, example: true }
+ *       500: { description: "Error al obtener los salones" }
  */
 router.get("/", (req, res) => salonesControlador.buscarSalones(req, res));
 
@@ -37,96 +45,151 @@ router.get("/", (req, res) => salonesControlador.buscarSalones(req, res));
  *       - name: id
  *         in: path
  *         required: true
- *         description: ID del salón a buscar
- *         schema:
- *           type: integer
+ *         description: ID del salón
+ *         schema: { type: integer, example: 1 }
  *     responses:
- *       200:
- *         description: Salón encontrado
- *       404:
- *         description: Salón no encontrado
+ *       200: { description: "Salón encontrado correctamente" }
+ *       400: { description: "ID inválido" }
+ *       404: { description: "Salón no encontrado" }
  */
-router.get("/:id", (req, res) => salonesControlador.buscarSalonesPorId(req, res));
+router.get(
+  "/:id",
+  [param("id").isInt({ min: 1 }).withMessage("ID inválido")],
+  (req, res) => {
+    const errores = validationResult(req);
+    if (!errores.isEmpty()) {
+      return res.status(400).json({ ok: false, errores: errores.array() });
+    }
+    salonesControlador.buscarSalonesPorId(req, res);
+  }
+);
 
 /**
  * @swagger
  * /salones:
  *   post:
- *     summary: Crear un nuevo salón (solo empleados o admins)
+ *     summary: Crear un nuevo salón (solo empleados o administradores)
  *     tags: [Salones]
- *     security:
- *       - bearerAuth: []
+ *     security: [{ bearerAuth: [] }]
  *     requestBody:
  *       required: true
  *       content:
  *         application/json:
  *           schema:
  *             type: object
- *             required:
- *               - nombre
- *               - direccion
+ *             required: [nombre, direccion, capacidad, latitud, longitud]
  *             properties:
- *               nombre:
- *                 type: string
- *               direccion:
- *                 type: string
- *               capacidad:
- *                 type: integer
- *               latitud:
- *                 type: number
- *               longitud:
- *                 type: number
+ *               nombre: { type: string, example: "Salón Fiesta Feliz" }
+ *               direccion: { type: string, example: "Calle Falsa 123" }
+ *               capacidad: { type: integer, example: 50 }
+ *               latitud: { type: number, example: -31.4167 }
+ *               longitud: { type: number, example: -64.1833 }
  *     responses:
- *       201:
- *         description: Salón creado correctamente
- *       403:
- *         description: No autorizado
+ *       201: { description: "Salón creado correctamente" }
+ *       400: { description: "Errores de validación" }
+ *       403: { description: "No autorizado" }
+ *       500: { description: "Error al crear el salón" }
  */
-router.post("/", authenticateJWT, permit(["empleado", "admin"]), (req, res) =>
-  salonesControlador.crearSalones(req, res)
+router.post(
+  "/",
+  authenticateJWT,
+  permit(["empleado", "admin"]),
+  [
+    body("nombre").notEmpty().withMessage("El nombre es obligatorio"),
+    body("direccion").notEmpty().withMessage("La dirección es obligatoria"),
+    body("capacidad").isInt({ min: 1 }).withMessage("Capacidad debe ser un número entero positivo"),
+    body("latitud").isFloat({ min: -90, max: 90 }).withMessage("Latitud inválida"),
+    body("longitud").isFloat({ min: -180, max: 180 }).withMessage("Longitud inválida"),
+  ],
+  (req, res) => {
+    const errores = validationResult(req);
+    if (!errores.isEmpty()) {
+      return res.status(400).json({ ok: false, errores: errores.array() });
+    }
+    salonesControlador.crearSalones(req, res);
+  }
 );
 
 /**
  * @swagger
  * /salones:
  *   put:
- *     summary: Modificar un salón existente
+ *     summary: Modificar un salón existente (solo empleados o administradores)
  *     tags: [Salones]
- *     security:
- *       - bearerAuth: []
+ *     security: [{ bearerAuth: [] }]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [salon_id]
+ *             properties:
+ *               salon_id: { type: integer, example: 1 }
+ *               nombre: { type: string, example: "Salón Fiesta Renovado" }
+ *               direccion: { type: string, example: "Av. Siempre Viva 742" }
+ *               capacidad: { type: integer, example: 60 }
+ *               latitud: { type: number, example: -31.42 }
+ *               longitud: { type: number, example: -64.18 }
  *     responses:
- *       200:
- *         description: Salón modificado correctamente
- *       404:
- *         description: Salón no encontrado
+ *       200: { description: "Salón modificado correctamente" }
+ *       400: { description: "Errores de validación" }
+ *       404: { description: "Salón no encontrado" }
+ *       403: { description: "No autorizado" }
  */
-router.put("/", authenticateJWT, permit(["empleado", "admin"]), (req, res) =>
-  salonesControlador.modificarSalones(req, res)
+router.put(
+  "/",
+  authenticateJWT,
+  permit(["empleado", "admin"]),
+  [
+    body("salon_id").isInt().withMessage("ID del salón inválido"),
+    body("nombre").optional().isString().withMessage("Nombre inválido"),
+    body("direccion").optional().isString().withMessage("Dirección inválida"),
+    body("capacidad").optional().isInt({ min: 1 }).withMessage("Capacidad inválida"),
+    body("latitud").optional().isFloat({ min: -90, max: 90 }).withMessage("Latitud inválida"),
+    body("longitud").optional().isFloat({ min: -180, max: 180 }).withMessage("Longitud inválida"),
+  ],
+  (req, res) => {
+    const errores = validationResult(req);
+    if (!errores.isEmpty()) {
+      return res.status(400).json({ ok: false, errores: errores.array() });
+    }
+    salonesControlador.modificarSalones(req, res);
+  }
 );
 
 /**
  * @swagger
  * /salones/{id}:
  *   delete:
- *     summary: Eliminar un salón por ID (soft delete)
+ *     summary: Eliminar un salón por ID (solo empleados o administradores)
  *     tags: [Salones]
- *     security:
- *       - bearerAuth: []
+ *     security: [{ bearerAuth: [] }]
  *     parameters:
  *       - name: id
  *         in: path
  *         required: true
  *         description: ID del salón a eliminar
- *         schema:
- *           type: integer
+ *         schema: { type: integer, example: 1 }
  *     responses:
- *       200:
- *         description: Salón eliminado correctamente
- *       404:
- *         description: Salón no encontrado
+ *       200: { description: "Salón eliminado correctamente" }
+ *       404: { description: "Salón no encontrado" }
+ *       403: { description: "No autorizado" }
  */
-router.delete("/:id", authenticateJWT, permit(["empleado", "admin"]), (req, res) =>
-  salonesControlador.eliminarSalones(req, res)
+router.delete(
+  "/:id",
+  authenticateJWT,
+  permit(["empleado", "admin"]),
+  [
+    param("id").isInt({ min: 1 }).withMessage("ID inválido"),
+  ],
+  (req, res) => {
+    const errores = validationResult(req);
+    if (!errores.isEmpty()) {
+      return res.status(400).json({ ok: false, errores: errores.array() });
+    }
+    salonesControlador.eliminarSalones(req, res);
+  }
 );
 
 export default router;

@@ -1,4 +1,4 @@
-// src/Middlewares/authenticateJWT.js
+//Src/Middlewares/AuthenticateJWT.js
 import jwt from "jsonwebtoken";
 import dotenv from "dotenv";
 import { conexion } from "../db/conexion.js";
@@ -31,7 +31,6 @@ export const authenticateJWT = async (req, res, next) => {
       return res.status(401).json({ ok: false, mensaje: "Token inválido" });
     }
 
-    // Comprobar que el usuario exista y esté activo
     const [rows] = await conexion.execute(
       "SELECT usuario_id, nombre, apellido, nombre_usuario, tipo_usuario, activo FROM usuarios WHERE usuario_id = ? LIMIT 1",
       [payload.usuario_id]
@@ -58,7 +57,7 @@ export const authenticateJWT = async (req, res, next) => {
 };
 
 /**
- * Genera Access Token (corto) y Refresh Token (largo)
+ * Genera Access Token (Corto) y Refresh Token (Largo)
  * @param {Object} user - { usuario_id, nombre_usuario, tipo_usuario }
  * @returns {{ accessToken: string, refreshToken: string }}
  */

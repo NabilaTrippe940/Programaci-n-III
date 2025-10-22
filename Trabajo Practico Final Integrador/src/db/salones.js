@@ -1,5 +1,5 @@
+//Src/Db/Salones.js
 import { conexion } from './conexion.js';
-
 
 export default class Salones {
   buscarSalones = async () => { //GET http://localhost:3000/api/v1/salones

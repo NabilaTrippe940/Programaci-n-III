@@ -1,4 +1,4 @@
-// src/Middlewares/roles.js
+//Src/Middlewares/Roles.js
 export const permit = (...rolesAllowed) => {
   return (req, res, next) => {
     if (!req.user) return res.status(401).json({ ok: false, msg: "No autenticado" });

@@ -1,3 +1,4 @@
+//App.js
 import express from "express";
 import salonesRutas from "./src/v1/rutas/salonesRutas.js";
 import authRutas from './src/v1/rutas/authRutas.js';

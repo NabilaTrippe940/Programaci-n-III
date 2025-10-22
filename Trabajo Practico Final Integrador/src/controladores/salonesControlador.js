@@ -1,3 +1,4 @@
+//Src/Controladores/SalonesControlador.js
 import SalonesServicio from '../servicios/salonesServicio.js';
 
 

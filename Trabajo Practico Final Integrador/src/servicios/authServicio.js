@@ -1,22 +1,33 @@
+//Src/Servicios/AuthServicio.js
 import { conexion } from "../db/conexion.js";
 import bcrypt from "bcryptjs";
 
 export default class AuthServicio {
   async findByNombreUsuario(nombre_usuario) {
-    const [rows] = await conexion.execute(
-      "SELECT * FROM usuarios WHERE nombre_usuario = ? LIMIT 1",
-      [nombre_usuario]
-    );
-    return rows[0];
+    try {
+      const [rows] = await conexion.execute(
+        "SELECT * FROM usuarios WHERE nombre_usuario = ? AND activo = 1 LIMIT 1",
+        [nombre_usuario]
+      );
+      return rows[0];
+    } catch (err) {
+      console.error("Error en findByNombreUsuario:", err);
+      throw err;
+    }
   }
 
   async findById(usuario_id) {
-    const [rows] = await conexion.execute(
-      `SELECT usuario_id, nombre, apellido, nombre_usuario, tipo_usuario, celular, foto, creado, modificado, activo 
-       FROM usuarios WHERE usuario_id = ? LIMIT 1`,
-      [usuario_id]
-    );
-    return rows[0];
+    try {
+      const [rows] = await conexion.execute(
+        `SELECT usuario_id, nombre, apellido, nombre_usuario, tipo_usuario, celular, foto, creado, modificado, activo 
+         FROM usuarios WHERE usuario_id = ? LIMIT 1`,
+        [usuario_id]
+      );
+      return rows[0];
+    } catch (err) {
+      console.error("Error en findById:", err);
+      throw err;
+    }
   }
 
   async createUser({
@@ -28,51 +39,50 @@ export default class AuthServicio {
     celular = null,
     foto = null,
   }) {
-    const hash = await bcrypt.hash(contrasenia, 10);
-    const [result] = await conexion.execute(
-      `INSERT INTO usuarios (nombre, apellido, nombre_usuario, contrasenia, tipo_usuario, celular, foto, creado, activo) 
-       VALUES (?, ?, ?, ?, ?, ?, ?, NOW(), 1)`,
-      [nombre, apellido, nombre_usuario, hash, tipo_usuario, celular, foto]
-    );
-    const user = await this.findById(result.insertId);
-    return user;
+    try {
+      const hash = await bcrypt.hash(contrasenia, 10);
+      const [result] = await conexion.execute(
+        `INSERT INTO usuarios (nombre, apellido, nombre_usuario, contrasenia, tipo_usuario, celular, foto, creado, activo) 
+         VALUES (?, ?, ?, ?, ?, ?, ?, NOW(), 1)`,
+        [nombre, apellido, nombre_usuario, hash, tipo_usuario, celular, foto]
+      );
+      return await this.findById(result.insertId);
+    } catch (err) {
+      console.error("Error en createUser:", err);
+      throw err;
+    }
   }
 
-  async modificarUsuario({
-    usuario_id,
-    nombre,
-    apellido,
-    nombre_usuario,
-    contrasenia,
-    tipo_usuario,
-    celular,
-    foto,
-    activo,
-  }) {
-    let query = `
-      UPDATE usuarios 
-      SET nombre = ?, apellido = ?, nombre_usuario = ?, tipo_usuario = ?, celular = ?, foto = ?, activo = ?, modificado = NOW()
-    `;
-    const params = [
-      nombre,
-      apellido,
-      nombre_usuario,
-      tipo_usuario,
-      celular,
-      foto,
-      activo,
-    ];
+  async modificarUsuario(datos) {
+    try {
+      const { usuario_id, ...resto } = datos;
+      const campos = [];
+      const valores = [];
 
-    if (contrasenia) {
-      const hash = await bcrypt.hash(contrasenia, 10);
-      query += `, contrasenia = ?`;
-      params.push(hash);
+      for (const [key, value] of Object.entries(resto)) {
+        if (value !== undefined) {
+          if (key === "contrasenia") {
+            const hash = await bcrypt.hash(value, 10);
+            campos.push(`${key} = ?`);
+            valores.push(hash);
+          } else {
+            campos.push(`${key} = ?`);
+            valores.push(value);
+          }
+        }
+      }
+
+      if (!campos.length) return 0;
+
+      valores.push(usuario_id);
+      const [result] = await conexion.execute(
+        `UPDATE usuarios SET ${campos.join(", ")}, modificado = NOW() WHERE usuario_id = ?`,
+        valores
+      );
+      return result.affectedRows;
+    } catch (err) {
+      console.error("Error en modificarUsuario:", err);
+      throw err;
     }
-
-    query += ` WHERE usuario_id = ?`;
-    params.push(usuario_id);
-
-    const [result] = await conexion.execute(query, params);
-    return result.affectedRows;
   }
 }
