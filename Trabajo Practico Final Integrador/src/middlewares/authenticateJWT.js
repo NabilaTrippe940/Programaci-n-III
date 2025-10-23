@@ -7,8 +7,7 @@ dotenv.config();
 
 export const authenticateJWT = async (req, res, next) => {
   try {
-    const authHeader =
-      req.headers["authorization"] || req.headers["Authorization"];
+    const authHeader = req.headers["authorization"] || req.headers["Authorization"];
     if (!authHeader) return res.status(401).json({ ok: false, msg: "Token requerido" });
 
     const token = authHeader.startsWith("Bearer ")
@@ -46,7 +45,7 @@ export const authenticateJWT = async (req, res, next) => {
       nombre: user.nombre,
       apellido: user.apellido,
       nombre_usuario: user.nombre_usuario,
-      tipo_usuario: user.tipo_usuario,
+      tipo_usuario: user.tipo_usuario, // numérico: 1,2,3
     };
 
     next();
@@ -57,7 +56,7 @@ export const authenticateJWT = async (req, res, next) => {
 };
 
 /**
- * Genera Access Token (Corto) y Refresh Token (Largo)
+ * Genera Access Token (corto) y Refresh Token (largo)
  * @param {Object} user - { usuario_id, nombre_usuario, tipo_usuario }
  * @returns {{ accessToken: string, refreshToken: string }}
  */

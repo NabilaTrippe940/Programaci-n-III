@@ -123,7 +123,8 @@ export default class AuthControlador {
     try {
       const { id } = req.params;
 
-      if (req.user.tipo_usuario === "cliente" && req.user.usuario_id != id)
+      // 3 = cliente
+      if (req.user.tipo_usuario === 3 && req.user.usuario_id != id)
         return res.status(403).json({ ok: false, mensaje: "No tienes permiso para ver otro usuario" });
 
       const usuario = await authServicio.findById(id);
@@ -141,7 +142,7 @@ export default class AuthControlador {
     try {
       const { id } = req.params;
 
-      if (req.user.tipo_usuario === "cliente" && req.user.usuario_id != id)
+      if (req.user.tipo_usuario === 3 && req.user.usuario_id != id)
         return res.status(403).json({ ok: false, mensaje: "No puedes modificar otro usuario" });
 
       const actualizado = await authServicio.modificarUsuario({ usuario_id: id, ...req.body });

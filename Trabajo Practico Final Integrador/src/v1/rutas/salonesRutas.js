@@ -57,9 +57,7 @@ router.get(
   [param("id").isInt({ min: 1 }).withMessage("ID inválido")],
   (req, res) => {
     const errores = validationResult(req);
-    if (!errores.isEmpty()) {
-      return res.status(400).json({ ok: false, errores: errores.array() });
-    }
+    if (!errores.isEmpty()) return res.status(400).json({ ok: false, errores: errores.array() });
     salonesControlador.buscarSalonesPorId(req, res);
   }
 );
@@ -93,9 +91,9 @@ router.get(
 router.post(
   "/",
   authenticateJWT,
-  permit(["empleado", "admin"]),
+  permit(1, 2),
   [
-    body("nombre").notEmpty().withMessage("El nombre es obligatorio"),
+    body("titulo").notEmpty().withMessage("El titulo es obligatorio"),
     body("direccion").notEmpty().withMessage("La dirección es obligatoria"),
     body("capacidad").isInt({ min: 1 }).withMessage("Capacidad debe ser un número entero positivo"),
     body("latitud").isFloat({ min: -90, max: 90 }).withMessage("Latitud inválida"),
@@ -103,9 +101,7 @@ router.post(
   ],
   (req, res) => {
     const errores = validationResult(req);
-    if (!errores.isEmpty()) {
-      return res.status(400).json({ ok: false, errores: errores.array() });
-    }
+    if (!errores.isEmpty()) return res.status(400).json({ ok: false, errores: errores.array() });
     salonesControlador.crearSalones(req, res);
   }
 );
@@ -140,20 +136,19 @@ router.post(
 router.put(
   "/",
   authenticateJWT,
-  permit(["empleado", "admin"]),
+  permit(1, 2),
   [
-    body("salon_id").isInt().withMessage("ID del salón inválido"),
-    body("nombre").optional().isString().withMessage("Nombre inválido"),
+    body("salon_id").isInt({ min: 1 }).withMessage("ID del salón inválido"),
+    body("titulo").optional().isString().withMessage("Titulo inválido"),
     body("direccion").optional().isString().withMessage("Dirección inválida"),
     body("capacidad").optional().isInt({ min: 1 }).withMessage("Capacidad inválida"),
     body("latitud").optional().isFloat({ min: -90, max: 90 }).withMessage("Latitud inválida"),
     body("longitud").optional().isFloat({ min: -180, max: 180 }).withMessage("Longitud inválida"),
+    body("importe").isFloat({ min: 0 }).withMessage("Importe debe ser un numero positivo")
   ],
   (req, res) => {
     const errores = validationResult(req);
-    if (!errores.isEmpty()) {
-      return res.status(400).json({ ok: false, errores: errores.array() });
-    }
+    if (!errores.isEmpty()) return res.status(400).json({ ok: false, errores: errores.array() });
     salonesControlador.modificarSalones(req, res);
   }
 );
@@ -179,15 +174,11 @@ router.put(
 router.delete(
   "/:id",
   authenticateJWT,
-  permit(["empleado", "admin"]),
-  [
-    param("id").isInt({ min: 1 }).withMessage("ID inválido"),
-  ],
+  permit(1, 2),
+  [param("id").isInt({ min: 1 }).withMessage("ID inválido")],
   (req, res) => {
     const errores = validationResult(req);
-    if (!errores.isEmpty()) {
-      return res.status(400).json({ ok: false, errores: errores.array() });
-    }
+    if (!errores.isEmpty()) return res.status(400).json({ ok: false, errores: errores.array() });
     salonesControlador.eliminarSalones(req, res);
   }
 );

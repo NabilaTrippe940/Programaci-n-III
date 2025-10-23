@@ -13,13 +13,13 @@ export default class SalonesControlador {
       res.json({ ok: true, salones });
     } catch (err) {
       console.error(err);
-      res.status(500).json({ ok: false, mensaje: 'ERROR al obtener los datos.' });
+      res.status(500).json({ ok: false, mensaje: 'ERROR al obtener los datos' });
     }
   }
 
   buscarSalonesPorId = async (req, res) => {
     try {
-      const salon = await this.salonesServicio.buscarSalonesPorId(req.params.salon_id);
+      const salon = await this.salonesServicio.buscarSalonesPorId(req.params.id);
       if (salon.length === 0) return res.status(404).json({ ok: false, mensaje: 'ERROR: El salón no pudo ser encontrado.' });
       res.json({ ok: true, salon });
     } catch (err) {
@@ -44,9 +44,8 @@ export default class SalonesControlador {
 
   modificarSalones = async (req, res) => {
     try {
-      const { titulo, direccion, latitud, longitud, capacidad, importe, activo } = req.body;
-      const salon_id = req.params.salon_id;
-      if (!titulo || !direccion || !capacidad || !importe || typeof activo === 'undefined') {
+      const { salon_id, titulo, direccion, latitud, longitud, capacidad, importe, activo } = req.body;
+      if (!salon_id || !titulo || !direccion || !capacidad || !importe || typeof activo === 'undefined') {
         return res.status(400).json({ ok: false, mensaje: 'ERROR: Faltan datos obligatorios.' });
       }
       const affected = await this.salonesServicio.modificarSalones({ salon_id, titulo, direccion, latitud, longitud, capacidad, importe, activo });
@@ -57,6 +56,7 @@ export default class SalonesControlador {
       res.status(500).json({ ok: false, mensaje: 'ERROR al modificar el salón.' });
     }
   }
+
 
   eliminarSalones = async (req, res) => {
     try {

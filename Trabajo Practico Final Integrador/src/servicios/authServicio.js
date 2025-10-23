@@ -35,7 +35,7 @@ export default class AuthServicio {
     apellido,
     nombre_usuario,
     contrasenia,
-    tipo_usuario = "cliente",
+    tipo_usuario = 3, // por defecto cliente (3)
     celular = null,
     foto = null,
   }) {
@@ -82,6 +82,19 @@ export default class AuthServicio {
       return result.affectedRows;
     } catch (err) {
       console.error("Error en modificarUsuario:", err);
+      throw err;
+    }
+  }
+
+  async eliminarUsuario(usuario_id) {
+    try {
+      const [result] = await conexion.execute(
+        "UPDATE usuarios SET activo = 0, modificado = NOW() WHERE usuario_id = ?",
+        [usuario_id]
+      );
+      return result.affectedRows;
+    } catch (err) {
+      console.error("Error en eliminarUsuario:", err);
       throw err;
     }
   }

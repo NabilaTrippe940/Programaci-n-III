@@ -8,9 +8,7 @@ import { permit } from "../../middlewares/roles.js";
 const router = express.Router();
 const authControlador = new AuthControlador();
 
-/**
- * Helper: centraliza respuesta de errores de express-validator
- */
+// Helper para validación
 const manejarValidacion = (req, res, next) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) return res.status(400).json({ ok: false, errores: errors.array() });
@@ -41,13 +39,12 @@ const manejarValidacion = (req, res, next) => {
  *               - apellido
  *               - nombre_usuario
  *               - contrasenia
- *               - correo
  *             properties:
  *               nombre: { type: string, example: "Franco" }
  *               apellido: { type: string, example: "Ñaña" }
  *               nombre_usuario: { type: string, example: "francona" }
  *               contrasenia: { type: string, example: "123456" }
- *               tipo_usuario: { type: string, example: "cliente" }
+ *               tipo_usuario: { type: integer, example: 3 }
  *               celular: { type: string, example: "123456789" }
  *               foto: { type: string, example: "url/foto.jpg" }
  *     responses:
@@ -58,10 +55,11 @@ const manejarValidacion = (req, res, next) => {
 router.post(
   "/register",
   [
-    body("nombre").notEmpty().withMessage("nombre requerido"),
-    body("apellido").notEmpty().withMessage("apellido requerido"),
-    body("nombre_usuario").notEmpty().withMessage("nombre_usuario requerido"),
-    body("contrasenia").isLength({ min: 6 }).withMessage("contrasenia mínimo 6 caracteres"),
+    body("nombre").notEmpty(),
+    body("apellido").notEmpty(),
+    body("nombre_usuario").notEmpty(),
+    body("contrasenia").isLength({ min: 6 }),
+    body("tipo_usuario").optional().isInt({ min: 1, max: 3 }),
   ],
   manejarValidacion,
   (req, res) => authControlador.register(req, res)
@@ -93,8 +91,8 @@ router.post(
 router.post(
   "/login",
   [
-    body("nombre_usuario").notEmpty().withMessage("nombre_usuario requerido"),
-    body("contrasenia").notEmpty().withMessage("contrasenia requerido"),
+    body("nombre_usuario").notEmpty(),
+    body("contrasenia").notEmpty(),
   ],
   manejarValidacion,
   (req, res) => authControlador.login(req, res)
@@ -157,8 +155,11 @@ router.post("/logout", (req, res) => authControlador.logout(req, res));
 router.get(
   "/usuarios",
   authenticateJWT,
-  permit("admin", "empleado"),
-  (req, res) => authControlador.listarUsuarios ? authControlador.listarUsuarios(req, res) : res.status(501).json({ ok:false, mensaje:'listarUsuarios no implementado en controlador' })
+  permit(1, 2), // admin=1, empleado=2
+  (req, res) =>
+    authControlador.listarUsuarios
+      ? authControlador.listarUsuarios(req, res)
+      : res.status(501).json({ ok: false, mensaje: "listarUsuarios no implementado" })
 );
 
 /**
@@ -183,7 +184,7 @@ router.get(
 router.get(
   "/usuarios/:id",
   authenticateJWT,
-  [ param("id").isInt().withMessage("id debe ser entero") ],
+  [param("id").isInt()],
   manejarValidacion,
   (req, res) => authControlador.obtenerUsuario(req, res)
 );
@@ -212,7 +213,7 @@ router.get(
  *               apellido: { type: string }
  *               nombre_usuario: { type: string }
  *               contrasenia: { type: string }
- *               tipo_usuario: { type: string }
+ *               tipo_usuario: { type: integer, enum: [1,2,3] }
  *               celular: { type: string }
  *               foto: { type: string }
  *               activo: { type: boolean }
@@ -226,12 +227,12 @@ router.put(
   "/usuarios/:id",
   authenticateJWT,
   [
-    param("id").isInt().withMessage("id debe ser entero"),
+    param("id").isInt(),
     body("nombre").optional().isString(),
     body("apellido").optional().isString(),
     body("nombre_usuario").optional().isString(),
-    body("contrasenia").optional().isLength({ min: 6 }).withMessage("contrasenia mínimo 6 caracteres"),
-    body("tipo_usuario").optional().isIn(["admin","empleado","cliente"]),
+    body("contrasenia").optional().isLength({ min: 6 }),
+    body("tipo_usuario").optional().isInt({ min: 1, max: 3 }),
     body("celular").optional().isString(),
     body("foto").optional().isString(),
     body("activo").optional().isBoolean(),
@@ -260,8 +261,15 @@ router.put(
 router.delete(
   "/usuarios/:id",
   authenticateJWT,
-  permit("admin"),
-  (req, res) => authControlador.eliminarUsuario ? authControlador.eliminarUsuario(req, res) : res.status(501).json({ ok:false, mensaje:'eliminarUsuario no implementado en controlador' })
+  permit(1), // solo admin
+  (req, res) =>
+    authControlador
+      .eliminarUsuario(req.params.id)
+      .then((rows) => {
+        if (rows) res.json({ ok: true, mensaje: "Usuario desactivado" });
+        else res.status(404).json({ ok: false, mensaje: "Usuario no encontrado" });
+      })
+      .catch((err) => res.status(500).json({ ok: false, mensaje: err.message }))
 );
 
 export default router;
