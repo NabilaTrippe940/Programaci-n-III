@@ -8,7 +8,6 @@ import { permit } from "../../middlewares/roles.js";
 const router = express.Router();
 const authControlador = new AuthControlador();
 
-// Helper para validación
 const manejarValidacion = (req, res, next) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) return res.status(400).json({ ok: false, errores: errors.array() });
@@ -22,6 +21,7 @@ const manejarValidacion = (req, res, next) => {
  *   description: Endpoints de autenticación y gestión de usuarios
  */
 
+// -------------------- REGISTER --------------------
 /**
  * @swagger
  * /auth/register:
@@ -34,11 +34,7 @@ const manejarValidacion = (req, res, next) => {
  *         application/json:
  *           schema:
  *             type: object
- *             required:
- *               - nombre
- *               - apellido
- *               - nombre_usuario
- *               - contrasenia
+ *             required: [nombre, apellido, nombre_usuario, contrasenia]
  *             properties:
  *               nombre: { type: string, example: "Franco" }
  *               apellido: { type: string, example: "Ñaña" }
@@ -55,11 +51,11 @@ const manejarValidacion = (req, res, next) => {
 router.post(
   "/register",
   [
-    body("nombre").notEmpty(),
-    body("apellido").notEmpty(),
-    body("nombre_usuario").notEmpty(),
-    body("contrasenia").isLength({ min: 6 }),
-    body("tipo_usuario").optional().isInt({ min: 1, max: 3 }),
+    body("nombre").notEmpty().withMessage("El nombre es obligatorio").trim(),
+    body("apellido").notEmpty().withMessage("El apellido es obligatorio").trim(),
+    body("nombre_usuario").notEmpty().withMessage("El nombre de usuario es obligatorio").trim(),
+    body("contrasenia").isLength({ min: 6 }).withMessage("La contraseña debe tener al menos 6 caracteres"),
+    body("tipo_usuario").optional().isInt({ min: 1, max: 3 }).withMessage("Tipo de usuario inválido"),
   ],
   manejarValidacion,
   (req, res) => authControlador.register(req, res)
@@ -77,9 +73,7 @@ router.post(
  *         application/json:
  *           schema:
  *             type: object
- *             required:
- *               - nombre_usuario
- *               - contrasenia
+ *             required: [nombre_usuario, contrasenia]
  *             properties:
  *               nombre_usuario: { type: string, example: "francona" }
  *               contrasenia: { type: string, example: "123456" }
@@ -91,8 +85,8 @@ router.post(
 router.post(
   "/login",
   [
-    body("nombre_usuario").notEmpty(),
-    body("contrasenia").notEmpty(),
+    body("nombre_usuario").notEmpty().withMessage("El nombre de usuario es obligatorio").trim(),
+    body("contrasenia").notEmpty().withMessage("La contraseña es obligatoria"),
   ],
   manejarValidacion,
   (req, res) => authControlador.login(req, res)
@@ -144,7 +138,7 @@ router.post("/logout", (req, res) => authControlador.logout(req, res));
  * @swagger
  * /auth/usuarios:
  *   get:
- *     summary: Listar usuarios (solo admin o empleado)
+ *     summary: Listar todos los usuarios (solo admin o empleado)
  *     tags: [Auth]
  *     security:
  *       - bearerAuth: []
@@ -155,11 +149,14 @@ router.post("/logout", (req, res) => authControlador.logout(req, res));
 router.get(
   "/usuarios",
   authenticateJWT,
-  permit(1, 2), // admin=1, empleado=2
-  (req, res) =>
-    authControlador.listarUsuarios
-      ? authControlador.listarUsuarios(req, res)
-      : res.status(501).json({ ok: false, mensaje: "listarUsuarios no implementado" })
+  permit(1, 2),
+  async (req, res) => {
+    try {
+      await authControlador.listarUsuarios(req, res);
+    } catch (err) {
+      res.status(500).json({ ok: false, mensaje: err.message });
+    }
+  }
 );
 
 /**
@@ -171,8 +168,8 @@ router.get(
  *     security:
  *       - bearerAuth: []
  *     parameters:
- *       - in: path
- *         name: id
+ *       - name: id
+ *         in: path
  *         required: true
  *         schema: { type: integer }
  *         description: ID del usuario
@@ -184,7 +181,7 @@ router.get(
 router.get(
   "/usuarios/:id",
   authenticateJWT,
-  [param("id").isInt()],
+  [param("id").isInt().withMessage("ID de usuario inválido")],
   manejarValidacion,
   (req, res) => authControlador.obtenerUsuario(req, res)
 );
@@ -198,8 +195,8 @@ router.get(
  *     security:
  *       - bearerAuth: []
  *     parameters:
- *       - in: path
- *         name: id
+ *       - name: id
+ *         in: path
  *         required: true
  *         schema: { type: integer }
  *     requestBody:
@@ -227,10 +224,10 @@ router.put(
   "/usuarios/:id",
   authenticateJWT,
   [
-    param("id").isInt(),
-    body("nombre").optional().isString(),
-    body("apellido").optional().isString(),
-    body("nombre_usuario").optional().isString(),
+    param("id").isInt().withMessage("ID de usuario inválido"),
+    body("nombre").optional().isString().trim(),
+    body("apellido").optional().isString().trim(),
+    body("nombre_usuario").optional().isString().trim(),
     body("contrasenia").optional().isLength({ min: 6 }),
     body("tipo_usuario").optional().isInt({ min: 1, max: 3 }),
     body("celular").optional().isString(),
@@ -250,26 +247,31 @@ router.put(
  *     security:
  *       - bearerAuth: []
  *     parameters:
- *       - in: path
- *         name: id
+ *       - name: id
+ *         in: path
  *         required: true
  *         schema: { type: integer }
+ *         description: ID del usuario a desactivar
  *     responses:
- *       200: { description: "Usuario desactivado" }
+ *       200: { description: "Usuario desactivado correctamente" }
  *       403: { description: "No autorizado" }
+ *       404: { description: "Usuario no encontrado" }
  */
 router.delete(
   "/usuarios/:id",
   authenticateJWT,
-  permit(1), // solo admin
-  (req, res) =>
-    authControlador
-      .eliminarUsuario(req.params.id)
-      .then((rows) => {
-        if (rows) res.json({ ok: true, mensaje: "Usuario desactivado" });
-        else res.status(404).json({ ok: false, mensaje: "Usuario no encontrado" });
-      })
-      .catch((err) => res.status(500).json({ ok: false, mensaje: err.message }))
+  permit(1),
+  [param("id").isInt().withMessage("ID de usuario inválido")],
+  manejarValidacion,
+  async (req, res) => {
+    try {
+      const rows = await authControlador.eliminarUsuario(req.params.id);
+      if (rows) res.json({ ok: true, mensaje: "Usuario desactivado correctamente" });
+      else res.status(404).json({ ok: false, mensaje: "Usuario no encontrado" });
+    } catch (err) {
+      res.status(500).json({ ok: false, mensaje: err.message });
+    }
+  }
 );
 
 export default router;

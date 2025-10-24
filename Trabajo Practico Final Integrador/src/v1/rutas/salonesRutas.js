@@ -25,11 +25,12 @@ const salonesControlador = new SalonesControlador();
  *                 type: object
  *                 properties:
  *                   salon_id: { type: integer, example: 1 }
- *                   nombre: { type: string, example: "Salón Fiesta Feliz" }
+ *                   titulo: { type: string, example: "Salón Fiesta Feliz" }
  *                   direccion: { type: string, example: "Calle Falsa 123" }
  *                   capacidad: { type: integer, example: 50 }
  *                   latitud: { type: number, example: -31.4167 }
  *                   longitud: { type: number, example: -64.1833 }
+ *                   importe: { type: number, example: 15000.0 }
  *                   activo: { type: boolean, example: true }
  *       500: { description: "Error al obtener los salones" }
  */
@@ -75,13 +76,14 @@ router.get(
  *         application/json:
  *           schema:
  *             type: object
- *             required: [nombre, direccion, capacidad, latitud, longitud]
+ *             required: [titulo, direccion, capacidad, latitud, longitud, importe]
  *             properties:
- *               nombre: { type: string, example: "Salón Fiesta Feliz" }
+ *               titulo: { type: string, example: "Salón Fiesta Feliz" }
  *               direccion: { type: string, example: "Calle Falsa 123" }
  *               capacidad: { type: integer, example: 50 }
  *               latitud: { type: number, example: -31.4167 }
  *               longitud: { type: number, example: -64.1833 }
+ *               importe: { type: number, example: 15000.0 }
  *     responses:
  *       201: { description: "Salón creado correctamente" }
  *       400: { description: "Errores de validación" }
@@ -98,6 +100,7 @@ router.post(
     body("capacidad").isInt({ min: 1 }).withMessage("Capacidad debe ser un número entero positivo"),
     body("latitud").isFloat({ min: -90, max: 90 }).withMessage("Latitud inválida"),
     body("longitud").isFloat({ min: -180, max: 180 }).withMessage("Longitud inválida"),
+    body("importe").isFloat({ min: 0 }).withMessage("Importe debe ser un número positivo"),
   ],
   (req, res) => {
     const errores = validationResult(req);
@@ -122,11 +125,12 @@ router.post(
  *             required: [salon_id]
  *             properties:
  *               salon_id: { type: integer, example: 1 }
- *               nombre: { type: string, example: "Salón Fiesta Renovado" }
+ *               titulo: { type: string, example: "Salón Fiesta Renovado" }
  *               direccion: { type: string, example: "Av. Siempre Viva 742" }
  *               capacidad: { type: integer, example: 60 }
  *               latitud: { type: number, example: -31.42 }
  *               longitud: { type: number, example: -64.18 }
+ *               importe: { type: number, example: 18000.0 }
  *     responses:
  *       200: { description: "Salón modificado correctamente" }
  *       400: { description: "Errores de validación" }
@@ -144,7 +148,7 @@ router.put(
     body("capacidad").optional().isInt({ min: 1 }).withMessage("Capacidad inválida"),
     body("latitud").optional().isFloat({ min: -90, max: 90 }).withMessage("Latitud inválida"),
     body("longitud").optional().isFloat({ min: -180, max: 180 }).withMessage("Longitud inválida"),
-    body("importe").isFloat({ min: 0 }).withMessage("Importe debe ser un numero positivo")
+    body("importe").optional().isFloat({ min: 0 }).withMessage("Importe debe ser un número positivo"),
   ],
   (req, res) => {
     const errores = validationResult(req);

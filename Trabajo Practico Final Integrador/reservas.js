@@ -1,4 +1,5 @@
 //Reservas.js
+// Reservas.js
 import express from 'express';
 import handlebars from 'handlebars';
 import { readFile } from 'fs/promises';
@@ -26,17 +27,17 @@ const router = express.Router();
  *     summary: Envía un correo de notificación de nueva reserva
  *     tags: [Notificaciones]
  *     security:
- *       bearerAuth: []
+ *       - bearerAuth: []
  *     requestBody:
  *       required: true
  *       content:
  *         application/json:
  *           schema:
  *             type: object
- *             required: [fecha, salon, turno, correoDestino]
+ *             required: [fecha, titulo, turno, correoDestino]
  *             properties:
  *               fecha: { type: string, example: "2025-10-20" }
- *               salon: { type: string, example: "Salón Fiesta Feliz" }
+ *               titulo: { type: string, example: "Salón Fiesta Feliz" }
  *               turno: { type: string, example: "Mañana" }
  *               correoDestino: { type: string, format: email, example: "cliente@mail.com" }
  *     responses:
@@ -49,10 +50,10 @@ const router = express.Router();
 router.post(
   '/',
   authenticateJWT,
-  permit('empleado', 'admin'),
+  permit(1, 2), // Solo Admin (1) y Empleado (2)
   [
     body("fecha").notEmpty().withMessage("La fecha es obligatoria"),
-    body("salon").notEmpty().withMessage("El salón es obligatorio"),
+    body("titulo").notEmpty().withMessage("El título del salón es obligatorio"),
     body("turno").notEmpty().withMessage("El turno es obligatorio"),
     body("correoDestino").isEmail().withMessage("Formato de correo inválido"),
   ],
@@ -62,10 +63,13 @@ router.post(
       return res.status(400).json({ ok: false, errores: errores.array() });
     }
 
-    const { fecha, salon, turno, correoDestino } = req.body;
+    const { fecha, titulo, turno, correoDestino } = req.body;
 
     try {
-      const [salonExiste] = await conexion.query('SELECT * FROM salones WHERE titulo=?', [salon]);
+      const [salonExiste] = await conexion.query(
+        'SELECT * FROM salones WHERE titulo=?',
+        [titulo]
+      );
       if (salonExiste.length === 0)
         return res.status(404).json({ ok: false, mensaje: 'Salón no encontrado.' });
 
@@ -75,8 +79,10 @@ router.post(
       const hbsContent = await readFile(plantillaHbs, 'utf-8');
 
       const html = handlebars.compile(hbsContent)({
-        fecha, salon, turno,
-        url_ver_reserva: `http://localhost:3000/api/v1/salones/${salon}`
+        fecha,
+        titulo,
+        turno,
+        url_ver_reserva: `http://localhost:3000/api/v1/salones/${titulo}`
       });
 
       const transporter = nodemailer.createTransport({
@@ -84,10 +90,15 @@ router.post(
         auth: { user: process.env.USER, pass: process.env.PASS }
       });
 
-      await transporter.sendMail({ to: correoDestino, subject: 'Notificación de Reserva', html });
+      await transporter.sendMail({
+        to: correoDestino,
+        subject: 'Notificación de Reserva',
+        html
+      });
+
       res.json({ ok: true, mensaje: 'Correo enviado con éxito.' });
     } catch (err) {
-      console.error(err);
+      console.error("Error en notificación:", err);
       res.status(500).json({ ok: false, mensaje: 'Error interno del sistema.' });
     }
   }
