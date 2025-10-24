@@ -21,7 +21,6 @@ const manejarValidacion = (req, res, next) => {
  *   description: Endpoints de autenticación y gestión de usuarios
  */
 
-// -------------------- REGISTER --------------------
 /**
  * @swagger
  * /auth/register:
@@ -38,15 +37,16 @@ const manejarValidacion = (req, res, next) => {
  *             properties:
  *               nombre: { type: string, example: "Franco" }
  *               apellido: { type: string, example: "Ñaña" }
- *               nombre_usuario: { type: string, example: "francona" }
- *               contrasenia: { type: string, example: "123456" }
+ *               nombre_usuario: { type: string, example: "franana@correo.com" }
+ *               contrasenia: { type: string, example: "1234567" }
  *               tipo_usuario: { type: integer, example: 3 }
  *               celular: { type: string, example: "123456789" }
  *               foto: { type: string, example: "url/foto.jpg" }
  *     responses:
- *       201: { description: "Usuario registrado correctamente" }
+ *       201: { description: "Usuario registrado con éxito" }
  *       400: { description: "Errores de validación" }
- *       409: { description: "Usuario ya registrado" }
+ *       409: { description: "ERROR: El nombre de usuario ya existe" }
+ *       500: { description: "ERROR al registrar el usuario" }
  */
 router.post(
   "/register",
@@ -80,7 +80,9 @@ router.post(
  *     responses:
  *       200: { description: "Inicio de sesión exitoso (devuelve accessToken y refreshToken)" }
  *       400: { description: "Errores de validación" }
- *       401: { description: "Credenciales inválidas" }
+ *       401: { description: "ERROR: Contraseña incorrecta" }
+ *       404: { description: "ERROR: Usuario no encontrado"}
+ *       500: { description: "ERROR al iniciar sesión" }
  */
 router.post(
   "/login",
@@ -109,30 +111,10 @@ router.post(
  *               token: { type: string }
  *     responses:
  *       200: { description: "Nuevo accessToken" }
- *       401: { description: "Refresh token requerido" }
- *       403: { description: "Refresh token inválido o expirado" }
+ *       401: { description: "RefreshToken requerido" }
+ *       403: { description: "RefreshToken inválido" }
  */
 router.post("/refresh", (req, res) => authControlador.refreshToken(req, res));
-
-/**
- * @swagger
- * /auth/logout:
- *   post:
- *     summary: Cerrar sesión (invalidar refresh token)
- *     tags: [Auth]
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             required: [token]
- *             properties:
- *               token: { type: string }
- *     responses:
- *       200: { description: "Sesión cerrada correctamente" }
- */
-router.post("/logout", (req, res) => authControlador.logout(req, res));
 
 /**
  * @swagger
@@ -145,6 +127,7 @@ router.post("/logout", (req, res) => authControlador.logout(req, res));
  *     responses:
  *       200: { description: "Lista de usuarios" }
  *       403: { description: "No autorizado" }
+ *       500: { description: "ERROR al listar los usuarios" }
  */
 router.get(
   "/usuarios",
@@ -163,7 +146,7 @@ router.get(
  * @swagger
  * /auth/usuarios/{id}:
  *   get:
- *     summary: Obtener usuario por ID (propio o admin/empleado)
+ *     summary: Obtener usuario por ID
  *     tags: [Auth]
  *     security:
  *       - bearerAuth: []
@@ -175,8 +158,10 @@ router.get(
  *         description: ID del usuario
  *     responses:
  *       200: { description: "Usuario obtenido correctamente" }
- *       403: { description: "Acceso denegado" }
- *       404: { description: "Usuario no encontrado" }
+ *       400: { description: "ID del usuario inválido" }
+ *       401: { description: "No autenticado" }
+ *       404: { description: "ERROR: Usuario no encontrado" }
+ *       500: { description: "Error al obtener el usuario" }
  */
 router.get(
   "/usuarios/:id",
@@ -215,10 +200,11 @@ router.get(
  *               foto: { type: string }
  *               activo: { type: boolean }
  *     responses:
- *       200: { description: "Usuario modificado correctamente" }
+ *       200: { description: "Usuario modificado con éxito" }
  *       400: { description: "Errores de validación" }
- *       403: { description: "No autorizado" }
- *       404: { description: "Usuario no encontrado" }
+ *       403: { description: "ERROR: No puedes modificar otro usuario" }
+ *       404: { description: "ERROR: Usuario no encontrado o sin cambios" }
+ *       500: { description: "ERROR al modificar el usuario" }
  */
 router.put(
   "/usuarios/:id",
@@ -266,7 +252,7 @@ router.delete(
   async (req, res) => {
     try {
       const rows = await authControlador.eliminarUsuario(req.params.id);
-      if (rows) res.json({ ok: true, mensaje: "Usuario desactivado correctamente" });
+      if (rows) res.json({ ok: true, mensaje: "Usuario desactivado con éxito" });
       else res.status(404).json({ ok: false, mensaje: "Usuario no encontrado" });
     } catch (err) {
       res.status(500).json({ ok: false, mensaje: err.message });

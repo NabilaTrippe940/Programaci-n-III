@@ -25,14 +25,14 @@ const salonesControlador = new SalonesControlador();
  *                 type: object
  *                 properties:
  *                   salon_id: { type: integer, example: 1 }
- *                   titulo: { type: string, example: "Salón Fiesta Feliz" }
+ *                   titulo: { type: string, example: "Salón Messi" }
  *                   direccion: { type: string, example: "Calle Falsa 123" }
  *                   capacidad: { type: integer, example: 50 }
  *                   latitud: { type: number, example: -31.4167 }
  *                   longitud: { type: number, example: -64.1833 }
  *                   importe: { type: number, example: 15000.0 }
  *                   activo: { type: boolean, example: true }
- *       500: { description: "Error al obtener los salones" }
+ *       500: { description: "ERROR al obtener los datos" }
  */
 router.get("/", (req, res) => salonesControlador.buscarSalones(req, res));
 
@@ -49,9 +49,9 @@ router.get("/", (req, res) => salonesControlador.buscarSalones(req, res));
  *         description: ID del salón
  *         schema: { type: integer, example: 1 }
  *     responses:
- *       200: { description: "Salón encontrado correctamente" }
  *       400: { description: "ID inválido" }
- *       404: { description: "Salón no encontrado" }
+ *       404: { description: "ERROR: El salón no pudo ser encontrado" }
+ *       500: { description: "ERROR al obtener los datos" }
  */
 router.get(
   "/:id",
@@ -78,17 +78,17 @@ router.get(
  *             type: object
  *             required: [titulo, direccion, capacidad, latitud, longitud, importe]
  *             properties:
- *               titulo: { type: string, example: "Salón Fiesta Feliz" }
+ *               titulo: { type: string, example: "Salón Messi" }
  *               direccion: { type: string, example: "Calle Falsa 123" }
  *               capacidad: { type: integer, example: 50 }
  *               latitud: { type: number, example: -31.4167 }
  *               longitud: { type: number, example: -64.1833 }
  *               importe: { type: number, example: 15000.0 }
  *     responses:
- *       201: { description: "Salón creado correctamente" }
- *       400: { description: "Errores de validación" }
+ *       201: { description: "Salón creado con éxito" }
+ *       400: { description: "ERROR: Faltan datos obligatorios" }
  *       403: { description: "No autorizado" }
- *       500: { description: "Error al crear el salón" }
+ *       500: { description: "ERROR al crear el salón" }
  */
 router.post(
   "/",
@@ -132,10 +132,11 @@ router.post(
  *               longitud: { type: number, example: -64.18 }
  *               importe: { type: number, example: 18000.0 }
  *     responses:
- *       200: { description: "Salón modificado correctamente" }
- *       400: { description: "Errores de validación" }
- *       404: { description: "Salón no encontrado" }
+ *       200: { description: "Salón modificado con éxito" }
+ *       400: { description: "ERROR: Faltan datos obligatorio" }
  *       403: { description: "No autorizado" }
+ *       404: { description: "ERROR: El salón no pudo ser encontrado" }
+ *       500: { description: "ERROR al modificar el salón" }
  */
 router.put(
   "/",
@@ -171,9 +172,10 @@ router.put(
  *         description: ID del salón a eliminar
  *         schema: { type: integer, example: 1 }
  *     responses:
- *       200: { description: "Salón eliminado correctamente" }
- *       404: { description: "Salón no encontrado" }
+ *       200: { description: "Salón eliminado con éxito" }
+ *       404: { description: "ERROR: El salón no pudo ser encontrado" }
  *       403: { description: "No autorizado" }
+ *       500: { description: "ERROR al eliminar el salón" }
  */
 router.delete(
   "/:id",
