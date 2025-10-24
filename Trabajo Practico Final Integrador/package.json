@@ -2,11 +2,11 @@
   "name": "trabajo-practico-final-integrador",
   "version": "1.0.0",
   "description": "Aplicación de reservas casa de cumpleaños",
-  "main": "index.js",
+  "main": "server.js",
   "type": "module",
   "scripts": {
-    "start": "node index.js",
-    "dev": "node --watch index.js"
+    "start": "node server.js",
+    "dev": "node --watch server.js"
   },
   "author": "Franco",
   "license": "ISC",

@@ -57,16 +57,16 @@ export default class SalonesControlador {
     }
   }
 
-
   eliminarSalones = async (req, res) => {
-    try {
-      const salon_id = req.params.salon_id;
-      const affected = await this.salonesServicio.eliminarSalones(salon_id);
-      if (affected === 0) return res.status(404).json({ ok: false, mensaje: 'ERROR: El salón no pudo ser encontrado.' });
-      res.json({ ok: true, mensaje: 'Salón eliminado con éxito.' });
-    } catch (err) {
-      console.error(err);
-      res.status(500).json({ ok: false, mensaje: 'ERROR al eliminar el salón.' });
-    }
+  try {
+    const salon_id = req.params.id; 
+    const affected = await this.salonesServicio.eliminarSalones(salon_id);
+    if (affected === 0) return res.status(404).json({ ok: false, mensaje: 'ERROR: El salón no pudo ser encontrado.' });
+    res.json({ ok: true, mensaje: 'Salón eliminado con éxito.' });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ ok: false, mensaje: 'ERROR al eliminar el salón.' });
   }
+  }
+ 
 }
