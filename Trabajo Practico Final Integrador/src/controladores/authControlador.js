@@ -95,12 +95,6 @@ export default class AuthControlador {
     }
   }
 
-  async logout(req, res) {
-    const { token } = req.body;
-    REFRESH_TOKENS.delete(token);
-    res.json({ ok: true, mensaje: "Sesión cerrada correctamente" });
-  }
-
   async obtenerUsuario(req, res) {
     try {
       const { id } = req.params;
