@@ -31,7 +31,7 @@ const salonesControlador = new SalonesControlador();
  *                   latitud: { type: number, example: -31.4167 }
  *                   longitud: { type: number, example: -64.1833 }
  *                   importe: { type: number, example: 15000.0 }
- *                   activo: { type: boolean, example: true }
+ *                   activo: { type: integer, enum: [0, 1], example: 1 }
  *       500: { description: "Error al obtener los salones" }
  */
 router.get("/", (req, res) => salonesControlador.buscarSalones(req, res));

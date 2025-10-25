@@ -114,25 +114,6 @@ router.post(
  */
 router.post("/refresh", (req, res) => authControlador.refreshToken(req, res));
 
-/**
- * @swagger
- * /auth/logout:
- *   post:
- *     summary: Cerrar sesión (invalidar refresh token)
- *     tags: [Auth]
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             required: [token]
- *             properties:
- *               token: { type: string }
- *     responses:
- *       200: { description: "Sesión cerrada correctamente" }
- */
-router.post("/logout", (req, res) => authControlador.logout(req, res));
 
 /**
  * @swagger
@@ -213,7 +194,7 @@ router.get(
  *               tipo_usuario: { type: integer, enum: [1,2,3] }
  *               celular: { type: string }
  *               foto: { type: string }
- *               activo: { type: boolean }
+ *               activo: { type: integer, enum: [0, 1], example: 1 }
  *     responses:
  *       200: { description: "Usuario modificado correctamente" }
  *       400: { description: "Errores de validación" }
