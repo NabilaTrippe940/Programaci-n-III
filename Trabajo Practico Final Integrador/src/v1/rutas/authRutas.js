@@ -255,4 +255,50 @@ router.delete(
   }
 );
 
+/**
+ * @swagger
+ * /auth/admin/crear-usuario:
+ *   post:
+ *     summary: Crear un nuevo usuario (solo admin)
+ *     tags: [Auth]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [nombre, apellido, nombre_usuario, contrasenia, tipo_usuario]
+ *             properties:
+ *               nombre: { type: string }
+ *               apellido: { type: string }
+ *               nombre_usuario: { type: string }
+ *               contrasenia: { type: string }
+ *               tipo_usuario: { type: integer, enum: [1,2,3] }
+ *               celular: { type: string }
+ *               foto: { type: string }
+ *     responses:
+ *       201: { description: "Usuario creado correctamente" }
+ *       400: { description: "Errores de validación" }
+ *       403: { description: "No autorizado" }
+ *       409: { description: "Usuario ya existe" }
+ */
+router.post(
+  "/admin/crear-usuario",
+  authenticateJWT,
+  permit(1), // solo admin
+  [
+    body("nombre").notEmpty().withMessage("El nombre es obligatorio").trim(),
+    body("apellido").notEmpty().withMessage("El apellido es obligatorio").trim(),
+    body("nombre_usuario").notEmpty().withMessage("El nombre de usuario es obligatorio").trim(),
+    body("contrasenia").isLength({ min: 6 }).withMessage("La contraseña debe tener al menos 6 caracteres"),
+    body("tipo_usuario").isInt({ min: 1, max: 3 }).withMessage("Tipo de usuario inválido"),
+    body("celular").optional().isString(),
+    body("foto").optional().isString(),
+  ],
+  manejarValidacion,
+  (req, res) => authControlador.crearUsuarioAdmin(req, res)
+);
+
 export default router;

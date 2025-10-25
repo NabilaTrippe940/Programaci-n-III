@@ -140,4 +140,22 @@ export default class AuthControlador {
       res.status(500).json({ ok: false, mensaje: "Error al listar usuarios" });
     }
   }
+
+  async crearUsuarioAdmin(req, res) {
+  const errors = validationResult(req);
+  if (!errors.isEmpty())
+    return res.status(400).json({ ok: false, errores: errors.array() });
+
+  try {
+    const existente = await authServicio.findByNombreUsuario(req.body.nombre_usuario);
+    if (existente)
+      return res.status(409).json({ ok: false, mensaje: "El nombre de usuario ya existe" });
+
+    const nuevoUsuario = await authServicio.createUser(req.body);
+    res.status(201).json({ ok: true, mensaje: "Usuario creado correctamente", usuario: nuevoUsuario });
+  } catch (err) {
+    console.error("Error crearUsuarioAdmin:", err);
+    res.status(500).json({ ok: false, mensaje: "Error al crear usuario" });
+  }
+}
 }
