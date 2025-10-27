@@ -20,8 +20,63 @@ const manejarValidacion = (req, res, next) => {
  *   description: Endpoints para la gestión de turnos
  */
 
+/**
+ * @swagger
+ * /api/v1/turnos:
+ *   get:
+ *     summary: Obtener todos los turnos
+ *     tags: [Turnos]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Lista de turnos obtenida correctamente
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 ok:
+ *                   type: boolean
+ *                   example: true
+ *                 datos:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/Turno'
+ */
 router.get('/', authenticateJWT, async (req, res) => turnosControlador.buscarTurnos(req, res));
 
+/**
+ * @swagger
+ * /api/v1/turnos/{id}:
+ *   get:
+ *     summary: Obtener un turno por su ID
+ *     tags: [Turnos]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         description: ID numérico del turno
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         description: Turno encontrado
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 ok:
+ *                   type: boolean
+ *                   example: true
+ *                 datos:
+ *                   $ref: '#/components/schemas/Turno'
+ *       404:
+ *         description: No se encontró el turno
+ */
 router.get(
   '/:id',
   authenticateJWT,
@@ -30,6 +85,36 @@ router.get(
   async (req, res) => turnosControlador.buscarTurnoPorId(req, res)
 );
 
+/**
+ * @swagger
+ * /api/v1/turnos:
+ *   post:
+ *     summary: Crear un nuevo turno
+ *     tags: [Turnos]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/TurnoCreate'
+ *     responses:
+ *       201:
+ *         description: Turno creado correctamente
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 ok:
+ *                   type: boolean
+ *                   example: true
+ *                 datos:
+ *                   $ref: '#/components/schemas/Turno'
+ *       400:
+ *         description: Error de validación o datos incorrectos
+ */
 router.post(
   '/',
   authenticateJWT,
@@ -43,6 +128,35 @@ router.post(
   async (req, res) => turnosControlador.crearTurno(req, res)
 );
 
+/**
+ * @swagger
+ * /api/v1/turnos/{id}:
+ *   put:
+ *     summary: Modificar un turno existente
+ *     tags: [Turnos]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         description: ID numérico del turno a modificar
+ *         schema:
+ *           type: integer
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/TurnoUpdate'
+ *     responses:
+ *       200:
+ *         description: Turno modificado correctamente
+ *       400:
+ *         description: Error en la validación de datos
+ *       404:
+ *         description: No se encontró el turno
+ */
 router.put(
   '/:id',
   authenticateJWT,
@@ -58,6 +172,27 @@ router.put(
   async (req, res) => turnosControlador.modificarTurno(req, res)
 );
 
+/**
+ * @swagger
+ * /api/v1/turnos/{id}:
+ *   delete:
+ *     summary: Eliminar un turno existente
+ *     tags: [Turnos]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         description: ID numérico del turno a eliminar
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         description: Turno eliminado correctamente
+ *       404:
+ *         description: No se encontró el turno
+ */
 router.delete(
   '/:id',
   authenticateJWT,
