@@ -4,6 +4,7 @@ import salonesRutas from "./src/v1/rutas/salonesRutas.js";
 import authRutas from './src/v1/rutas/authRutas.js';
 import reservaRutas from "./reservas.js";
 import serviciosRutas from './src/v1/rutas/serviciosRutas.js';
+import turnosRutas from './src/v1/rutas/turnosRutas.js';
 
 
 
@@ -23,6 +24,8 @@ app.use("/api/v1/salones", salonesRutas);
 app.use("/api/v1/notificacion", reservaRutas);
 app.use("/api/v1/auth", authRutas);
 app.use('/api/v1/servicios', serviciosRutas);
+app.use('/api/v1/turnos', turnosRutas);
+
 
 
 export default app;
