@@ -1,4 +1,3 @@
-
 import swaggerJsdoc from "swagger-jsdoc";
 import swaggerUi from "swagger-ui-express";
 import path from "path";
@@ -50,66 +49,48 @@ const options = {
             activo: { type: "boolean", example: true },
           },
         },
+
         Turno: {
           type: "object",
+          description: "Franja horaria base",
           properties: {
-            id: { type: "integer", example: 12 },
-            fecha: { type: "string", format: "date", example: "2025-11-03" },
-            hora: { type: "string", example: "14:30" },
-            salon_id: { type: "integer", example: 3 },
-            servicio_id: { type: "integer", example: 5 },
-            cliente_email: {
+            turno_id: { type: "integer", example: 12 },
+            orden: { type: "integer", example: 1, description: "Orden visual" },
+            hora_desde: {
               type: "string",
-              format: "email",
-              example: "cliente@correo.com",
+              example: "14:00:00",
+              description: "Hora inicio (HH:mm:ss)"
             },
-            estado: {
+            hora_hasta: {
               type: "string",
-              enum: ["pendiente", "confirmado", "cancelado"],
-              example: "pendiente",
+              example: "16:00:00",
+              description: "Hora fin (HH:mm:ss)"
             },
-            created_at: { type: "string", format: "date-time" },
-            updated_at: { type: "string", format: "date-time" },
-          },
-          required: [
-            "fecha",
-            "hora",
-            "salon_id",
-            "servicio_id",
-            "cliente_email",
-          ],
+            activo: { type: "boolean", example: true },
+            creado: { type: "string", format: "date-time", example: "2025-08-19T18:44:19Z" },
+            modificado: { type: "string", format: "date-time", nullable: true, example: "2025-10-27T00:26:26Z" }
+          }
         },
         TurnoCreate: {
           type: "object",
+          description: "Requisitos para crear una franja horaria base.",
+          required: ["orden", "hora_desde", "hora_hasta"],
           properties: {
-            fecha: { type: "string", format: "date" },
-            hora: { type: "string" },
-            salon_id: { type: "integer" },
-            servicio_id: { type: "integer" },
-            cliente_email: { type: "string", format: "email" },
-          },
-          required: [
-            "fecha",
-            "hora",
-            "salon_id",
-            "servicio_id",
-            "cliente_email",
-          ],
+            orden: { type: "integer", example: 2 },
+            hora_desde: { type: "string", example: "16:00:00" },
+            hora_hasta: { type: "string", example: "18:00:00" }
+          }
         },
         TurnoUpdate: {
           type: "object",
+          description: "Requisitos para modificar una franja horaria base.",
           properties: {
-            fecha: { type: "string", format: "date" },
-            hora: { type: "string" },
-            salon_id: { type: "integer" },
-            servicio_id: { type: "integer" },
-            cliente_email: { type: "string", format: "email" },
-            estado: {
-              type: "string",
-              enum: ["pendiente", "confirmado", "cancelado"],
-            },
-          },
-        },
+            orden: { type: "integer", example: 3 },
+            hora_desde: { type: "string", example: "18:00:00" },
+            hora_hasta: { type: "string", example: "22:00:00" },
+            activo: { type: "boolean", example: false }
+          }
+        }
       },
     },
     security: [{ bearerAuth: [] }],
@@ -119,3 +100,5 @@ const options = {
 
 export const swaggerSpec = swaggerJsdoc(options);
 export { swaggerUi };
+
+
