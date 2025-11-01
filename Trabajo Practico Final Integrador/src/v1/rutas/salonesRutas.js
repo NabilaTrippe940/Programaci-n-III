@@ -12,8 +12,9 @@ const salonesControlador = new SalonesControlador();
  * @swagger
  * /salones:
  *   get:
- *     summary: Obtener todos los salones
+ *     summary: Obtener todos los salones (usuarios logueados)
  *     tags: [Salones]
+ *     security: [{ bearerAuth: [] }]
  *     responses:
  *       200:
  *         description: Lista de salones obtenida correctamente
@@ -25,23 +26,29 @@ const salonesControlador = new SalonesControlador();
  *                 type: object
  *                 properties:
  *                   salon_id: { type: integer, example: 1 }
- *                   titulo: { type: string, example: "Salón Messi" }
+ *                   titulo: { type: string, example: "Salón Fiesta Feliz" }
  *                   direccion: { type: string, example: "Calle Falsa 123" }
  *                   capacidad: { type: integer, example: 50 }
  *                   latitud: { type: number, example: -31.4167 }
  *                   longitud: { type: number, example: -64.1833 }
  *                   importe: { type: number, example: 15000.0 }
- *                   activo: { type: boolean, example: true }
- *       500: { description: "ERROR al obtener los datos" }
+ *                   activo: { type: integer, enum: [0, 1], example: 1 }
+ *       401: { description: "No autenticado" }
+ *       500: { description: "Error al obtener los salones" }
  */
-router.get("/", (req, res) => salonesControlador.buscarSalones(req, res));
+router.get(
+  "/",
+  authenticateJWT,
+  (req, res) => salonesControlador.buscarSalones(req, res)
+);
 
 /**
  * @swagger
  * /salones/{id}:
  *   get:
- *     summary: Obtener un salón por su ID
+ *     summary: Obtener un salón por ID (solo empleados o administradores)
  *     tags: [Salones]
+ *     security: [{ bearerAuth: [] }]
  *     parameters:
  *       - name: id
  *         in: path
@@ -49,12 +56,16 @@ router.get("/", (req, res) => salonesControlador.buscarSalones(req, res));
  *         description: ID del salón
  *         schema: { type: integer, example: 1 }
  *     responses:
+ *       200: { description: "Salón encontrado correctamente" }
  *       400: { description: "ID inválido" }
- *       404: { description: "ERROR: El salón no pudo ser encontrado" }
- *       500: { description: "ERROR al obtener los datos" }
+ *       401: { description: "No autenticado" }
+ *       403: { description: "No autorizado" }
+ *       404: { description: "Salón no encontrado" }
  */
 router.get(
   "/:id",
+  authenticateJWT,
+  permit(1, 2),
   [param("id").isInt({ min: 1 }).withMessage("ID inválido")],
   (req, res) => {
     const errores = validationResult(req);
@@ -78,17 +89,17 @@ router.get(
  *             type: object
  *             required: [titulo, direccion, capacidad, latitud, longitud, importe]
  *             properties:
- *               titulo: { type: string, example: "Salón Messi" }
+ *               titulo: { type: string, example: "Salón Fiesta Feliz" }
  *               direccion: { type: string, example: "Calle Falsa 123" }
  *               capacidad: { type: integer, example: 50 }
  *               latitud: { type: number, example: -31.4167 }
  *               longitud: { type: number, example: -64.1833 }
  *               importe: { type: number, example: 15000.0 }
  *     responses:
- *       201: { description: "Salón creado con éxito" }
- *       400: { description: "ERROR: Faltan datos obligatorios" }
+ *       201: { description: "Salón creado correctamente" }
+ *       400: { description: "Errores de validación" }
  *       403: { description: "No autorizado" }
- *       500: { description: "ERROR al crear el salón" }
+ *       500: { description: "Error al crear el salón" }
  */
 router.post(
   "/",
@@ -132,11 +143,10 @@ router.post(
  *               longitud: { type: number, example: -64.18 }
  *               importe: { type: number, example: 18000.0 }
  *     responses:
- *       200: { description: "Salón modificado con éxito" }
- *       400: { description: "ERROR: Faltan datos obligatorio" }
+ *       200: { description: "Salón modificado correctamente" }
+ *       400: { description: "Errores de validación" }
+ *       404: { description: "Salón no encontrado" }
  *       403: { description: "No autorizado" }
- *       404: { description: "ERROR: El salón no pudo ser encontrado" }
- *       500: { description: "ERROR al modificar el salón" }
  */
 router.put(
   "/",
@@ -172,10 +182,9 @@ router.put(
  *         description: ID del salón a eliminar
  *         schema: { type: integer, example: 1 }
  *     responses:
- *       200: { description: "Salón eliminado con éxito" }
- *       404: { description: "ERROR: El salón no pudo ser encontrado" }
+ *       200: { description: "Salón eliminado correctamente" }
+ *       404: { description: "Salón no encontrado" }
  *       403: { description: "No autorizado" }
- *       500: { description: "ERROR al eliminar el salón" }
  */
 router.delete(
   "/:id",

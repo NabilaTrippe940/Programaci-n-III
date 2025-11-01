@@ -19,14 +19,14 @@ export default class AuthControlador {
     try {
       const existente = await authServicio.findByNombreUsuario(req.body.nombre_usuario);
       if (existente)
-        return res.status(409).json({ ok: false, mensaje: "ERROR: El nombre de usuario ya existe." });
+        return res.status(409).json({ ok: false, mensaje: "El nombre de usuario ya existe" });
 
       const nuevo = await authServicio.createUser(req.body);
 
-      res.status(201).json({ ok: true, mensaje: "Usuario registrado con éxito", usuario: nuevo });
+      res.status(201).json({ ok: true, mensaje: "Usuario registrado correctamente", usuario: nuevo });
     } catch (error) {
-      console.error("ERROR", error);
-      res.status(500).json({ ok: false, mensaje: "ERROR al registrar el usuario." });
+      console.error("Error en register:", error);
+      res.status(500).json({ ok: false, mensaje: "Error al registrar usuario" });
     }
   }
 
@@ -39,11 +39,10 @@ export default class AuthControlador {
 
     try {
       const user = await authServicio.findByNombreUsuario(nombre_usuario);
-      if (!user) return res.status(404).json({ ok: false, mensaje: "ERROR: Usuario no encontrado." });
+      if (!user) return res.status(404).json({ ok: false, mensaje: "Usuario no encontrado" });
 
       const esValida = await bcrypt.compare(contrasenia, user.contrasenia);
-      if (!esValida) 
-        return res.status(401).json({ ok: false, mensaje: "ERROR: Contraseña incorrecta." });
+      if (!esValida) return res.status(401).json({ ok: false, mensaje: "Contraseña incorrecta" });
 
       const accessToken = jwt.sign(
         { usuario_id: user.usuario_id, nombre_usuario: user.nombre_usuario, tipo_usuario: user.tipo_usuario },
@@ -61,7 +60,7 @@ export default class AuthControlador {
 
       res.json({
         ok: true,
-        mensaje: "Sesion iniciada con éxito.",
+        mensaje: "Inicio de sesión exitoso",
         accessToken,
         refreshToken,
         usuario: {
@@ -72,16 +71,15 @@ export default class AuthControlador {
         },
       });
     } catch (error) {
-      console.error("ERROR", error);
-      res.status(500).json({ ok: false, mensaje: "ERROR al iniciar sesión." });
+      console.error("Error login:", error);
+      res.status(500).json({ ok: false, mensaje: "Error al iniciar sesión" });
     }
   }
 
   async refreshToken(req, res) {
     const { token } = req.body;
-    if (!token) return res.status(401).json({ ok: false, mensaje: "RefreshToken requerido." });
-    if (!REFRESH_TOKENS.has(token)) 
-      return res.status(403).json({ ok: false, mensaje: "RefreshToken inválido." });
+    if (!token) return res.status(401).json({ ok: false, mensaje: "Refresh token requerido" });
+    if (!REFRESH_TOKENS.has(token)) return res.status(403).json({ ok: false, mensaje: "Refresh token inválido" });
 
     try {
       const decoded = jwt.verify(token, process.env.JWT_REFRESH_SECRET);
@@ -92,23 +90,24 @@ export default class AuthControlador {
       );
       res.json({ ok: true, accessToken: nuevoAccessToken });
     } catch (err) {
-      console.error("ERROR", err);
-      res.status(403).json({ ok: false, mensaje: "RefreshToken inválido." });
+      console.error("refreshToken error:", err);
+      res.status(403).json({ ok: false, mensaje: "Refresh token expirado o inválido" });
     }
   }
 
   async obtenerUsuario(req, res) {
     try {
       const { id } = req.params;
+      if (req.user.tipo_usuario === 3 && req.user.usuario_id != id)
+        return res.status(403).json({ ok: false, mensaje: "No tienes permiso para ver otro usuario" });
 
       const usuario = await authServicio.findById(id);
-      if (!usuario) 
-        return res.status(404).json({ ok: false, mensaje: "ERROR: Usuario no encontrado." });
+      if (!usuario) return res.status(404).json({ ok: false, mensaje: "Usuario no encontrado" });
 
       res.json({ ok: true, usuario });
     } catch (error) {
-      console.error("ERROR", error);
-      res.status(500).json({ ok: false, mensaje: "ERROR al obtener el usuario." });
+      console.error("Error obtenerUsuario:", error);
+      res.status(500).json({ ok: false, mensaje: "Error al obtener usuario" });
     }
   }
 
@@ -116,15 +115,15 @@ export default class AuthControlador {
     try {
       const { id } = req.params;
       if (req.user.tipo_usuario === 3 && req.user.usuario_id != id)
-        return res.status(403).json({ ok: false, mensaje: "ERROR: No puedes modificar otro usuario" });
+        return res.status(403).json({ ok: false, mensaje: "No puedes modificar otro usuario" });
 
       const actualizado = await authServicio.modificarUsuario({ usuario_id: id, ...req.body });
-      if (!actualizado) return res.status(404).json({ ok: false, mensaje: "ERROR: Usuario no encontrado o sin cambios." });
+      if (!actualizado) return res.status(404).json({ ok: false, mensaje: "Usuario no encontrado o sin cambios" });
 
-      res.json({ ok: true, mensaje: "Usuario modificado con éxito." });
+      res.json({ ok: true, mensaje: "Usuario modificado correctamente" });
     } catch (error) {
-      console.error("ERROR", error);
-      res.status(500).json({ ok: false, mensaje: "ERROR al modificar el usuario." });
+      console.error("Error modificarUsuario:", error);
+      res.status(500).json({ ok: false, mensaje: "Error al modificar usuario" });
     }
   }
 
@@ -137,8 +136,26 @@ export default class AuthControlador {
       const usuarios = await authServicio.listarUsuarios();
       res.json({ ok: true, usuarios });
     } catch (error) {
-      console.error("ERROR", error);
-      res.status(500).json({ ok: false, mensaje: "ERROR al listar los usuarios." });
+      console.error("Error listarUsuarios:", error);
+      res.status(500).json({ ok: false, mensaje: "Error al listar usuarios" });
     }
   }
+
+  async crearUsuarioAdmin(req, res) {
+  const errors = validationResult(req);
+  if (!errors.isEmpty())
+    return res.status(400).json({ ok: false, errores: errors.array() });
+
+  try {
+    const existente = await authServicio.findByNombreUsuario(req.body.nombre_usuario);
+    if (existente)
+      return res.status(409).json({ ok: false, mensaje: "El nombre de usuario ya existe" });
+
+    const nuevoUsuario = await authServicio.createUser(req.body);
+    res.status(201).json({ ok: true, mensaje: "Usuario creado correctamente", usuario: nuevoUsuario });
+  } catch (err) {
+    console.error("Error crearUsuarioAdmin:", err);
+    res.status(500).json({ ok: false, mensaje: "Error al crear usuario" });
+  }
+}
 }
