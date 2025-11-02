@@ -5,9 +5,9 @@ import authRutas from './src/v1/rutas/authRutas.js';
 import reservaRutas from "./reservas.js";
 import serviciosRutas from './src/v1/rutas/serviciosRutas.js';
 import turnosRutas from './src/v1/rutas/turnosRutas.js';
+import reservasServiciosRutas from './src/v1/rutas/reservasServiciosRutas.js';
 
 import { swaggerSpec, swaggerUi } from "./src/swagger/swaggerConfig.js";
-
 
 const app = express();
 app.use(express.json());
@@ -23,6 +23,6 @@ app.use("/api/v1/notificacion", reservaRutas);
 app.use("/api/v1/auth", authRutas);
 app.use('/api/v1/servicios', serviciosRutas);
 app.use('/api/v1/turnos', turnosRutas);
-
+app.use('/api/v1/reservas-servicios', reservasServiciosRutas);
 
 export default app;
