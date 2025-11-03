@@ -1,4 +1,5 @@
 //Src/Middlewares/AuthenticateJWT.js
+
 import jwt from "jsonwebtoken";
 import dotenv from "dotenv";
 import { conexion } from "../db/conexion.js";
@@ -7,6 +8,7 @@ dotenv.config();
 
 export const authenticateJWT = async (req, res, next) => {
   try {
+    // 🔐 Extraer token del header
     const authHeader = req.headers["authorization"] || req.headers["Authorization"];
     if (!authHeader) return res.status(401).json({ ok: false, msg: "Token requerido" });
 
@@ -16,6 +18,7 @@ export const authenticateJWT = async (req, res, next) => {
 
     if (!token) return res.status(401).json({ ok: false, msg: "Token requerido" });
 
+    // 🔍 Verificar token
     let payload;
     try {
       payload = jwt.verify(token, process.env.JWT_SECRET);
@@ -30,22 +33,25 @@ export const authenticateJWT = async (req, res, next) => {
       return res.status(401).json({ ok: false, mensaje: "Token inválido" });
     }
 
+    // 🧠 Buscar usuario en base de datos
     const [rows] = await conexion.execute(
       "SELECT usuario_id, nombre, apellido, nombre_usuario, tipo_usuario, activo FROM usuarios WHERE usuario_id = ? LIMIT 1",
       [payload.usuario_id]
     );
 
     const user = rows && rows[0];
+
     if (!user || user.activo !== 1) {
       return res.status(401).json({ ok: false, msg: "Usuario no válido o inactivo" });
     }
 
+    // ✅ Asignar datos al request para uso en middlewares
     req.user = {
       usuario_id: user.usuario_id,
       nombre: user.nombre,
       apellido: user.apellido,
       nombre_usuario: user.nombre_usuario,
-      tipo_usuario: user.tipo_usuario, // numérico: 1,2,3
+      tipo_usuario: user.tipo_usuario, // ← este campo es clave para validar roles
     };
 
     next();
@@ -56,7 +62,7 @@ export const authenticateJWT = async (req, res, next) => {
 };
 
 /**
- * Genera Access Token (corto) y Refresh Token (largo)
+ * 🔁 Genera Access Token (corto) y Refresh Token (largo)
  * @param {Object} user - { usuario_id, nombre_usuario, tipo_usuario }
  * @returns {{ accessToken: string, refreshToken: string }}
  */

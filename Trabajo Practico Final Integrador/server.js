@@ -5,6 +5,8 @@ dotenv.config();
 import app from './app.js';
 
 const PORT = process.env.PUERTO || 3000;
+
 app.listen(PORT, () => {
   console.log(`SERVIDOR INICIADO CORRECTAMENTE - RUTA: http://localhost:${PORT}`);
+  console.log(`DOCUMENTACIÓN SWAGGER DISPONIBLE EN: http://localhost:${PORT}/api-docs`);
 });

@@ -1,4 +1,3 @@
-//Reservas.js
 // Reservas.js
 import express from 'express';
 import handlebars from 'handlebars';

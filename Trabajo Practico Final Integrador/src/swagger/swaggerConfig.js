@@ -1,6 +1,5 @@
 import swaggerJsdoc from "swagger-jsdoc";
 import swaggerUi from "swagger-ui-express";
-import path from "path";
 
 const options = {
   definition: {
@@ -49,53 +48,85 @@ const options = {
             activo: { type: "boolean", example: true },
           },
         },
-
         Turno: {
           type: "object",
           description: "Franja horaria base",
           properties: {
             turno_id: { type: "integer", example: 12 },
-            orden: { type: "integer", example: 1, description: "Orden visual" },
-            hora_desde: {
-              type: "string",
-              example: "14:00:00",
-              description: "Hora inicio (HH:mm:ss)"
-            },
-            hora_hasta: {
-              type: "string",
-              example: "16:00:00",
-              description: "Hora fin (HH:mm:ss)"
-            },
+            orden: { type: "integer", example: 1 },
+            hora_desde: { type: "string", example: "14:00:00" },
+            hora_hasta: { type: "string", example: "16:00:00" },
             activo: { type: "boolean", example: true },
-            creado: { type: "string", format: "date-time", example: "2025-08-19T18:44:19Z" },
-            modificado: { type: "string", format: "date-time", nullable: true, example: "2025-10-27T00:26:26Z" }
-          }
+            creado: {
+              type: "string",
+              format: "date-time",
+              example: "2025-08-19T18:44:19Z",
+            },
+            modificado: {
+              type: "string",
+              format: "date-time",
+              nullable: true,
+              example: "2025-10-27T00:26:26Z",
+            },
+          },
         },
-        TurnoCreate: {
+        Reserva: {
           type: "object",
-          description: "Requisitos para crear una franja horaria base.",
-          required: ["orden", "hora_desde", "hora_hasta"],
           properties: {
-            orden: { type: "integer", example: 2 },
-            hora_desde: { type: "string", example: "16:00:00" },
-            hora_hasta: { type: "string", example: "18:00:00" }
-          }
+            reserva_id: { type: "integer", example: 1 },
+            fecha_reserva: { type: "string", example: "2025-12-10" },
+            salon_id: { type: "integer", example: 2 },
+            usuario_id: { type: "integer", example: 5 },
+            turno_id: { type: "integer", example: 1 },
+            tematica: { type: "string", example: "Fiesta Pirata" },
+            importe_total: { type: "number", example: 32000.0 },
+            activo: { type: "boolean", example: true },
+            creado: { type: "string", example: "2025-10-30T10:00:00Z" },
+            modificado: { type: "string", example: "2025-10-31T15:30:00Z" },
+            cliente: { type: "string", example: "Juan Pérez" },
+            salon: { type: "string", example: "Salón Fiesta Feliz" },
+            hora_desde: { type: "string", example: "17:00" },
+            hora_hasta: { type: "string", example: "21:00" },
+          },
         },
-        TurnoUpdate: {
+        NuevaReserva: {
           type: "object",
-          description: "Requisitos para modificar una franja horaria base.",
+          required: [
+            "fecha_reserva",
+            "salon_id",
+            "turno_id",
+            "tematica",
+            "importe_total",
+          ],
           properties: {
-            orden: { type: "integer", example: 3 },
-            hora_desde: { type: "string", example: "18:00:00" },
-            hora_hasta: { type: "string", example: "22:00:00" },
-            activo: { type: "boolean", example: false }
-          }
-        }
+            fecha_reserva: { type: "string", example: "2025-12-10" },
+            salon_id: { type: "integer", example: 2 },
+            turno_id: { type: "integer", example: 1 },
+            tematica: { type: "string", example: "Fiesta de Superhéroes" },
+            importe_total: { type: "number", example: 32000.0 },
+            servicios: {
+              type: "array",
+              items: { type: "integer", example: 1 },
+            },
+          },
+        },
+        ModificarReserva: {
+          type: "object",
+          required: ["reserva_id"],
+          properties: {
+            reserva_id: { type: "integer", example: 1 },
+            fecha_reserva: { type: "string", example: "2025-12-12" },
+            turno_id: { type: "integer", example: 2 },
+            tematica: { type: "string", example: "Fiesta Espacial" },
+            importe_total: { type: "number", example: 28000.0 },
+            activo: { type: "boolean", example: true },
+          },
+        },
       },
     },
     security: [{ bearerAuth: [] }],
   },
-  apis: [path.resolve("./src/v1/rutas/*.js")],
+  apis: ['./src/v1/rutas/*.js'], // ✅ CAMBIO: ruta relativa sin path.resolve
 };
 
 export const swaggerSpec = swaggerJsdoc(options);
