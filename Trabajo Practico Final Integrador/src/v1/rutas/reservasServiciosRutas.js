@@ -14,6 +14,7 @@ const manejarValidacion = (req, res, next) => {
   next();
 };
 
+
 /**
  * @swagger
  * /reservas-servicios/{reserva_id}:
@@ -29,6 +30,7 @@ const manejarValidacion = (req, res, next) => {
  *         required: true
  *         schema:
  *           type: integer
+ *         description: ID de la reserva
  *     responses:
  *       200:
  *         description: Lista de servicios asociados a la reserva
@@ -70,12 +72,8 @@ router.get(
  *                 type: integer
  *               servicio_id:
  *                 type: integer
- *               cantidad:
- *                 type: integer
- *                 example: 1
  *               importe:
  *                 type: number
- *                 example: 1500
  *     responses:
  *       201:
  *         description: Servicio agregado
@@ -91,7 +89,6 @@ router.post(
   [
     body('reserva_id').isInt({ min: 1 }).withMessage('reserva_id inválido'),
     body('servicio_id').isInt({ min: 1 }).withMessage('servicio_id inválido'),
-    body('cantidad').optional().isInt({ min: 1 }).withMessage('cantidad inválida'),
     body('importe').isFloat({ min: 0 }).withMessage('importe inválido'),
   ],
   manejarValidacion,
@@ -100,32 +97,33 @@ router.post(
 
 /**
  * @swagger
- * /reservas-servicios/{id}:
+ * /reservas-servicios/{reserva_servicio_id}:
  *   delete:
- *     summary: Eliminar (soft) un servicio de una reserva
+ *     summary: Eliminar un servicio de reserva por ID
  *     tags:
  *       - ReservasServicios
  *     security:
  *       - bearerAuth: []
  *     parameters:
  *       - in: path
- *         name: id
+ *         name: reserva_servicio_id
  *         required: true
  *         schema:
  *           type: integer
+ *         description: ID del servicio de reserva a eliminar
  *     responses:
  *       200:
- *         description: Servicio eliminado
+ *         description: Servicio eliminado correctamente
  *       404:
- *         description: No encontrado
+ *         description: Servicio no encontrado
  *       500:
  *         description: Error del servidor
  */
 router.delete(
-  '/:id',
+  '/:reserva_servicio_id',
   authenticateJWT,
   permit(1,2),
-  [ param('id').isInt({ min: 1 }).withMessage('ID inválido') ],
+  [ param('reserva_servicio_id').isInt({ min: 1 }).withMessage('ID inválido') ],
   manejarValidacion,
   (req, res) => controlador.eliminarServicioDeReserva(req, res)
 );

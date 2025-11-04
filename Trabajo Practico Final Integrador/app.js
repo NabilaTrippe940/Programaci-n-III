@@ -2,12 +2,14 @@
 import express from "express";
 import salonesRutas from "./src/v1/rutas/salonesRutas.js";
 import authRutas from './src/v1/rutas/authRutas.js';
-import reservaRutas from "./reservas.js";
+import reservasRutas from "./src/v1/rutas/reservasRutas.js";
+import reservaNotificacion from "./reservas.js";
 import serviciosRutas from './src/v1/rutas/serviciosRutas.js';
 import turnosRutas from './src/v1/rutas/turnosRutas.js';
 import reservasServiciosRutas from './src/v1/rutas/reservasServiciosRutas.js';
 
-import { swaggerSpec, swaggerUi } from "./src/swagger/swaggerConfig.js";
+import swaggerUi from 'swagger-ui-express';
+import { swaggerSpec } from "./src/swagger/swaggerConfig.js";
 
 const app = express();
 app.use(express.json());
@@ -19,7 +21,8 @@ app.get("/estado", (req, res) => {
 });
 
 app.use("/api/v1/salones", salonesRutas);
-app.use("/api/v1/notificacion", reservaRutas);
+app.use("/api/v1/reservas", reservasRutas);
+app.use("/api/v1/notificacion", reservaNotificacion);
 app.use("/api/v1/auth", authRutas);
 app.use('/api/v1/servicios', serviciosRutas);
 app.use('/api/v1/turnos', turnosRutas);

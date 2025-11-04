@@ -1,19 +1,17 @@
 //Src/Middlewares/AuthenticateJWT.js
 import jwt from "jsonwebtoken";
 import dotenv from "dotenv";
-import { conexion } from "../db/conexion.js";
+import UsuariosServicio from "../servicios/usuariosServicio.js";
 
 dotenv.config();
+const usuariosServicio = new UsuariosServicio();
 
 export const authenticateJWT = async (req, res, next) => {
   try {
     const authHeader = req.headers["authorization"] || req.headers["Authorization"];
     if (!authHeader) return res.status(401).json({ ok: false, msg: "Token requerido" });
 
-    const token = authHeader.startsWith("Bearer ")
-      ? authHeader.split(" ")[1]
-      : authHeader;
-
+    const token = authHeader.startsWith("Bearer ") ? authHeader.split(" ")[1] : authHeader;
     if (!token) return res.status(401).json({ ok: false, msg: "Token requerido" });
 
     let payload;
@@ -21,31 +19,20 @@ export const authenticateJWT = async (req, res, next) => {
       payload = jwt.verify(token, process.env.JWT_SECRET);
     } catch (err) {
       if (err.name === "TokenExpiredError") {
-        return res.status(401).json({
-          ok: false,
-          mensaje: "Token expirado",
-          code: "TOKEN_EXPIRED",
-        });
+        return res.status(401).json({ ok: false, mensaje: "Token expirado", code: "TOKEN_EXPIRED" });
       }
       return res.status(401).json({ ok: false, mensaje: "Token inválido" });
     }
 
-    const [rows] = await conexion.execute(
-      "SELECT usuario_id, nombre, apellido, nombre_usuario, tipo_usuario, activo FROM usuarios WHERE usuario_id = ? LIMIT 1",
-      [payload.usuario_id]
-    );
-
-    const user = rows && rows[0];
-    if (!user || user.activo !== 1) {
-      return res.status(401).json({ ok: false, msg: "Usuario no válido o inactivo" });
-    }
+    const user = await usuariosServicio.obtenerUsuarioActivoPorId(payload.usuario_id);
+    if (!user) return res.status(401).json({ ok: false, msg: "Usuario no válido o inactivo" });
 
     req.user = {
       usuario_id: user.usuario_id,
       nombre: user.nombre,
       apellido: user.apellido,
       nombre_usuario: user.nombre_usuario,
-      tipo_usuario: user.tipo_usuario, // numérico: 1,2,3
+      tipo_usuario: user.tipo_usuario,
     };
 
     next();
@@ -55,37 +42,21 @@ export const authenticateJWT = async (req, res, next) => {
   }
 };
 
-/**
- * Genera Access Token (corto) y Refresh Token (largo)
- * @param {Object} user - { usuario_id, nombre_usuario, tipo_usuario }
- * @returns {{ accessToken: string, refreshToken: string }}
- */
 export const generateTokens = (user) => {
-  if (!process.env.JWT_SECRET)
-    throw new Error("JWT_SECRET no definido en las variables de entorno");
-
-  if (!process.env.JWT_REFRESH_SECRET)
-    throw new Error("JWT_REFRESH_SECRET no definido en las variables de entorno");
+  if (!process.env.JWT_SECRET) throw new Error("JWT_SECRET no definido");
+  if (!process.env.JWT_REFRESH_SECRET) throw new Error("JWT_REFRESH_SECRET no definido");
 
   const accessToken = jwt.sign(
-    {
-      usuario_id: user.usuario_id,
-      nombre_usuario: user.nombre_usuario,
-      tipo_usuario: user.tipo_usuario,
-    },
+    { usuario_id: user.usuario_id, nombre_usuario: user.nombre_usuario, tipo_usuario: user.tipo_usuario },
     process.env.JWT_SECRET,
     { expiresIn: process.env.JWT_EXPIRES_IN || "5m" }
   );
 
   const refreshToken = jwt.sign(
-    {
-      usuario_id: user.usuario_id,
-      nombre_usuario: user.nombre_usuario,
-      tipo_usuario: user.tipo_usuario,
-    },
+    { usuario_id: user.usuario_id, nombre_usuario: user.nombre_usuario, tipo_usuario: user.tipo_usuario },
     process.env.JWT_REFRESH_SECRET,
     { expiresIn: "7d" }
   );
 
-  return { accessToken, refreshToken };
+  return { accessToken, refreshToken };
 };

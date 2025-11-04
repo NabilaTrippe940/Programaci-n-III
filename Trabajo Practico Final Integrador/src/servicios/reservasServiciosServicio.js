@@ -1,14 +1,13 @@
 //Src/Servicios/ReservasServiciosServicio.js
-import ReservasServicios from '../db/reservasServicios.js';
-
+import ReservasServiciosDB from '../db/reservasServicios.js';
 export default class ReservasServiciosServicio {
   constructor() {
-    this.reservasServicios = new ReservasServicios();
+    this.db = new ReservasServiciosDB();
   }
 
-  listarPorReserva = (reserva_id) => this.reservasServicios.listarPorReserva(reserva_id);
+  listarPorReserva = (reserva_id) => this.db.listarPorReserva(reserva_id);
 
-  agregarAServicio = (datos) => this.reservasServicios.agregarAServicio(datos);
+  agregarAServicio = (datos) => this.db.agregarAServicio(datos);
 
-  eliminar = (reserva_servicio_id) => this.reservasServicios.eliminar(reserva_servicio_id);
+  eliminarPorId = (reserva_servicio_id) => this.db.eliminarPorId(reserva_servicio_id);
 }
