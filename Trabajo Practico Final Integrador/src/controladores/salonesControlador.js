@@ -1,7 +1,5 @@
 //Src/Controladores/SalonesControlador.js
 import SalonesServicio from '../servicios/salonesServicio.js';
-
-
 export default class SalonesControlador {
   constructor() {
     this.salonesServicio = new SalonesServicio();

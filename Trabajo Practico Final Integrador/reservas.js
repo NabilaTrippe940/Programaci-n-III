@@ -1,5 +1,4 @@
 //Reservas.js
-// Reservas.js
 import express from 'express';
 import handlebars from 'handlebars';
 import { readFile } from 'fs/promises';

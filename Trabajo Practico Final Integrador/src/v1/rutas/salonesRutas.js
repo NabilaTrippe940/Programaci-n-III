@@ -12,8 +12,9 @@ const salonesControlador = new SalonesControlador();
  * @swagger
  * /salones:
  *   get:
- *     summary: Obtener todos los salones
+ *     summary: Obtener todos los salones (usuarios logueados)
  *     tags: [Salones]
+ *     security: [{ bearerAuth: [] }]
  *     responses:
  *       200:
  *         description: Lista de salones obtenida correctamente
@@ -32,16 +33,22 @@ const salonesControlador = new SalonesControlador();
  *                   longitud: { type: number, example: -64.1833 }
  *                   importe: { type: number, example: 15000.0 }
  *                   activo: { type: integer, enum: [0, 1], example: 1 }
+ *       401: { description: "No autenticado" }
  *       500: { description: "Error al obtener los salones" }
  */
-router.get("/", (req, res) => salonesControlador.buscarSalones(req, res));
+router.get(
+  "/",
+  authenticateJWT,
+  (req, res) => salonesControlador.buscarSalones(req, res)
+);
 
 /**
  * @swagger
  * /salones/{id}:
  *   get:
- *     summary: Obtener un salón por su ID
+ *     summary: Obtener un salón por ID (solo empleados o administradores)
  *     tags: [Salones]
+ *     security: [{ bearerAuth: [] }]
  *     parameters:
  *       - name: id
  *         in: path
@@ -51,10 +58,14 @@ router.get("/", (req, res) => salonesControlador.buscarSalones(req, res));
  *     responses:
  *       200: { description: "Salón encontrado correctamente" }
  *       400: { description: "ID inválido" }
+ *       401: { description: "No autenticado" }
+ *       403: { description: "No autorizado" }
  *       404: { description: "Salón no encontrado" }
  */
 router.get(
   "/:id",
+  authenticateJWT,
+  permit(1, 2),
   [param("id").isInt({ min: 1 }).withMessage("ID inválido")],
   (req, res) => {
     const errores = validationResult(req);
