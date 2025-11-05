@@ -7,12 +7,20 @@ import reservaNotificacion from "./reservas.js";
 import serviciosRutas from './src/v1/rutas/serviciosRutas.js';
 import turnosRutas from './src/v1/rutas/turnosRutas.js';
 import reservasServiciosRutas from './src/v1/rutas/reservasServiciosRutas.js';
+import dashboardRutas from './src/v1/rutas/dashboardRutas.js';
+import { authenticateJWT } from "./src/middlewares/authenticateJWT.js";
+import { permit } from "./src/middlewares/roles.js";
+import path from "path";
+
+
 
 import swaggerUi from 'swagger-ui-express';
 import { swaggerSpec } from "./src/swagger/swaggerConfig.js";
 
 const app = express();
 app.use(express.json());
+app.use(express.static("src/public"));
+
 
 app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
@@ -27,5 +35,11 @@ app.use("/api/v1/auth", authRutas);
 app.use('/api/v1/servicios', serviciosRutas);
 app.use('/api/v1/turnos', turnosRutas);
 app.use('/api/v1/reservas-servicios', reservasServiciosRutas);
+app.use('/api/v1/dashboard', dashboardRutas);
+
+app.get('/dashboard', (req, res) => {
+  res.sendFile(path.resolve("src/public/dashboard/index.html"));
+});
+
 
 export default app;

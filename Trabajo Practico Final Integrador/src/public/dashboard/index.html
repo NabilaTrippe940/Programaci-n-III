@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Dashboard - Reservas de Salones Infantiles</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+  <header>
+    <h1>Dashboard - Sistema de Reservas de Salones Infantiles</h1>
+  </header>
+
+  <main>
+    <section id="resumen">
+      <div class="card" id="usuarios"></div>
+      <div class="card" id="catalogo"></div>
+      <div class="card" id="turnos"></div>
+      <div class="card" id="reservas"></div>
+    </section>
+
+    <section id="graficos">
+      <canvas id="graficoTurnos"></canvas>
+      <canvas id="graficoReservas"></canvas>
+    </section>
+
+    <section id="proximas">
+      <h2>Próximas Reservas (5 días)</h2>
+      <ul id="listaProximas"></ul>
+    </section>
+  </main>
+
+  <footer>
+    <p>Facultad de Ciencias de la Administración - UNER</p>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>

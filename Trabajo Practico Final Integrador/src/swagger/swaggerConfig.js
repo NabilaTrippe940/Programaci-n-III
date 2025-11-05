@@ -19,6 +19,7 @@ const options = {
         description: "Servidor local de desarrollo",
       },
     ],
+    
     components: {
       securitySchemes: {
         bearerAuth: { type: "http", scheme: "bearer", bearerFormat: "JWT" },
@@ -162,6 +163,13 @@ const options = {
       },
     },
     security: [{ bearerAuth: [] }],
+    tags: [
+  {
+    name: "Dashboard",
+    description: "Endpoints para visualizar métricas generales del sistema (solo administradores y empleados)."
+  }
+],
+
   },
   apis: [path.resolve("./src/v1/rutas/*.js")],
 };
