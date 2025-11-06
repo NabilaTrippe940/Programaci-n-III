@@ -1,9 +1,5 @@
-// =======================================================
-//  TOKEN DEL DASHBOARD (aislado y saneado)
-// =======================================================
-
-const STORE = window.sessionStorage;              // Cambiá a localStorage si querés persistir entre pestañas
-const TOKEN_KEY = 'dash.token';                   // Clave exclusiva del dashboard
+const STORE = window.sessionStorage;              
+const TOKEN_KEY = 'dash.token';                   
 
 function readToken()   { return (STORE.getItem(TOKEN_KEY) || '').trim(); }
 function writeToken(t) { STORE.setItem(TOKEN_KEY, t); }
@@ -18,22 +14,18 @@ writeToken(TOKEN);
 
 function apiGet(url) {
   const current = readToken();
-  return fetch(url, {
-    headers: { Authorization: 'Bearer ' + current }
-  }).then(async (res) => {
-    if (!res.ok) {
-      const txt = await res.text();
-      throw new Error(`HTTP ${res.status} - ${txt || 'Error'}`);
-    }
-    return res.json();
-  });
+  return fetch(url, { headers: { Authorization: 'Bearer ' + current } })
+    .then(async (res) => {
+      if (!res.ok) {
+        const txt = await res.text();
+        throw new Error(`HTTP ${res.status} - ${txt || 'Error'}`);
+      }
+      return res.json();
+    });
 }
 
-// Si el backend responde { ok, data:{...} } uso data; si no, uso tal cual
 function unwrap(payload) {
-  if (payload && typeof payload === 'object' && 'data' in payload) {
-    return payload.data;
-  }
+  if (payload && typeof payload === 'object' && 'data' in payload) return payload.data;
   return payload;
 }
 
@@ -44,46 +36,76 @@ document.getElementById('btnToken')?.addEventListener('click', () => {
   location.reload();
 });
 
-// =======================================================
-//  DOM refs
-// =======================================================
 const $usuarios  = document.getElementById("usuarios");
 const $catalogo  = document.getElementById("catalogo");
 const $turnos    = document.getElementById("turnos");
 const $reservas  = document.getElementById("reservas");
 const $listaProx = document.getElementById("listaProximas");
 
-const ctxTurnos   = document.getElementById("graficoTurnos").getContext("2d");
-const ctxReservas = document.getElementById("graficoReservas").getContext("2d");
 
-let chartTurnos, chartReservas;
+const $cvTurnos   = document.getElementById("graficoTurnos");
+const $cvReservas = document.getElementById("graficoReservas");
+const ctxTurnos   = $cvTurnos.getContext("2d");
+const ctxReservas = $cvReservas.getContext("2d");
 
-// =======================================================
-//  RENDER RESUMEN  (adaptado a tu /resumen)
-// =======================================================
+let chartSalonMes = null;
+let chartSerieReservas = null;
+
+
+function cssVar(name, fallback = '') {
+  const v = getComputedStyle(document.documentElement).getPropertyValue(name);
+  return (v || fallback).toString().trim();
+}
+
+const COLORS = {
+  axis: "#f3ecff",
+  grid: "rgba(255,255,255,0.18)",
+  barFill: "rgba(255, 91, 189, 0.60)",  
+  barStroke: "rgba(255, 91, 189, 1)",
+  lineStroke: "rgba(255, 135, 210, 1)",
+  lineFill: "rgba(255, 135, 210, 0.20)",
+  pointBorder: "rgba(255, 135, 210, 1)"
+};
+
+function setCardHTML($el, inner) {
+  const body = $el?.querySelector('.card-body');
+  if (body) body.innerHTML = inner;
+  else if ($el) $el.innerHTML = inner;
+}
+
+function wipeCanvas(ctx) {
+  const canvas = ctx.canvas;
+  const g = canvas.getContext('2d');
+  g.clearRect(0, 0, canvas.width, canvas.height);
+}
+
+function formatearFechaLocal(isoString, incluirHora = true) {
+  const d = new Date(isoString);
+  if (isNaN(d)) return isoString; 
+  const fecha = d.toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+  if (!incluirHora) return fecha;
+  const hora  = d.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit', hour12: false });
+  return `${fecha} — ${hora} hs`;
+}
+
 function renderResumen(res) {
-  // res = {
-  //   usuarios: { total, clientes, empleados, administradores },
-  //   catalogo: { servicios, salones },
-  //   turnosHoy: { totales, reservados, disponibles, ocupacion },
-  //   reservas: { hoy, mes, proximas: [] }
-  // }
-
   const u = res.usuarios || {};
-  $usuarios.innerHTML = `
-    <h3>Usuarios</h3>
-    <p>Total: <strong>${u.total ?? 0}</strong></p>
-    <p>Clientes: ${u.clientes ?? 0}</p>
-    <p>Empleados: ${u.empleados ?? 0}</p>
-    <p>Administradores: ${u.administradores ?? 0}</p>
-  `;
+  setCardHTML($usuarios, `
+    <ul class="mini">
+      <li><span class="hint">Total:</span> <span class="kpi">${u.total ?? 0}</span></li>
+      <li>Clientes: <strong>${u.clientes ?? 0}</strong></li>
+      <li>Empleados: <strong>${u.empleados ?? 0}</strong></li>
+      <li>Administradores: <strong>${u.administradores ?? 0}</strong></li>
+    </ul>
+  `);
 
   const c = res.catalogo || {};
-  $catalogo.innerHTML = `
-    <h3>Catálogo</h3>
-    <p>Salones activos: <strong>${c.salones ?? '-'}</strong></p>
-    <p>Servicios activos: <strong>${c.servicios ?? '-'}</strong></p>
-  `;
+  setCardHTML($catalogo, `
+    <ul class="mini">
+      <li>Servicios activos: <span class="kpi">${c.servicios ?? '-'}</span></li>
+      <li>Salones activos: <span class="kpi">${c.salones ?? '-'}</span></li>
+    </ul>
+  `);
 
   const t = res.turnosHoy || {};
   const tot = t.totales ?? 0;
@@ -91,84 +113,163 @@ function renderResumen(res) {
   const disp = t.disponibles ?? Math.max(0, tot - resv);
   const ocup = t.ocupacion != null ? Number(t.ocupacion) : (tot > 0 ? (resv / tot) * 100 : 0);
 
-  $turnos.innerHTML = `
-    <h3>Turnos (Hoy)</h3>
-    <p>Activos: <strong>${tot}</strong></p>
-    <p>Reservados: <strong>${resv}</strong></p>
-    <p>Disponibles: <strong>${disp}</strong></p>
-    <p>Ocupación: <strong>${Math.round(ocup)}%</strong></p>
-  `;
+  setCardHTML($turnos, `
+    <ul class="mini">
+      <li>Activos: <span class="kpi">${tot}</span></li>
+      <li>Reservados: <strong>${resv}</strong></li>
+      <li>Disponibles: <strong>${disp}</strong></li>
+      <li>Ocupación: <strong>${Math.round(ocup)}%</strong></li>
+    </ul>
+  `);
 
   const r = res.reservas || {};
-  $reservas.innerHTML = `
-    <h3>Reservas</h3>
-    <p>Hoy: <strong>${r.hoy ?? '-'}</strong></p>
-    <p>Mes actual: <strong>${r.mes ?? '-'}</strong></p>
-  `;
+  setCardHTML($reservas, `
+    <ul class="mini">
+      <li>Hoy: <span class="kpi">${r.hoy ?? '-'}</span></li>
+      <li>Mes actual: <span class="kpi">${r.mes ?? '-'}</span></li>
+    </ul>
+  `);
 
-  // Lista de próximas (viene en /resumen → reservas.proximas)
   renderProximas(r.proximas || []);
 }
 
-// =======================================================
-//  RENDER LISTA PRÓXIMAS (desde /resumen)
-// =======================================================
 function renderProximas(lista) {
   $listaProx.innerHTML = "";
   if (!lista.length) {
     $listaProx.innerHTML = "<li>Sin reservas en los próximos 5 días</li>";
     return;
   }
+
   for (const r of lista) {
+    const fecha = formatearFechaLocal(r.fecha_reserva ?? "-", false);
+    const salon = r.salon ?? r.titulo ?? "—";
+    const procesadoPor =
+      r.procesado_por || r.empleado || r.admin || r.usuario || r.cliente || "—";
+
+    const tematica = r.tematica ? ` — <em>${r.tematica}</em>` : "";
+
     const li = document.createElement("li");
-    li.innerHTML = `<strong>${r.fecha_reserva}</strong> — ${r.salon} — ${r.cliente}`;
+    li.innerHTML =
+      `<span class="label">Fecha reserva:</span> <strong>${fecha}</strong>` +
+      ` — <span class="label">Salón:</span> <strong>${salon}</strong>` +
+      ` — <span class="label">Reserva procesada por:</span> <strong>${procesadoPor}</strong>` +
+      tematica;
+
     $listaProx.appendChild(li);
   }
 }
 
-// =======================================================
-//  RENDER GRÁFICOS (adaptado a /graficos)
-// =======================================================
 function renderGraficos(data) {
-  // data = {
-  //   reservasPorMes: [{ mes:"Oct", total:3 }, ...],
-  //   reservasPorSalon: [{ salon:"Salón A", total: 4 }, ...]
-  // }
+  const porSalon = data.reservasPorSalon
+                || data?.reservas?.porSalonMesActual
+                || data?.reservas?.porSalon
+                || [];
 
-  // Barras: reservas por salón (mes actual)
-  const porSalon = data.reservasPorSalon || [];
-  const labelsSalon = porSalon.map(x => x.salon);
-  const valoresSalon = porSalon.map(x => x.total);
+  const labelsSalon  = porSalon.map(x => x.salon || x.titulo || '—');
+  const valoresSalon = porSalon.map(x => Number(x.total ?? x.cantidad ?? 0));
+  const maxSalon = valoresSalon.length ? Math.max(...valoresSalon) : 0;
+  const suggestedMaxSalon = Math.max(5, maxSalon + 1);
 
-  if (chartTurnos) chartTurnos.destroy();
-  chartTurnos = new Chart(ctxTurnos, {
-    type: "bar",
-    data: {
-      labels: labelsSalon,
-      datasets: [{ label: "Reservas por salón (mes actual)", data: valoresSalon }]
-    },
-    options: { responsive: true, maintainAspectRatio: false }
-  });
+  if (chartSalonMes) chartSalonMes.destroy();
+  if (!labelsSalon.length) wipeCanvas(ctxTurnos);
+  else {
+    const gradBar = ctxTurnos.createLinearGradient(0, 0, 0, $cvTurnos.height);
+    gradBar.addColorStop(0, "rgba(255, 91, 189, 0.85)");
+    gradBar.addColorStop(1, "rgba(255, 91, 189, 0.40)");
 
-  // Línea: reservas por mes (últimos n que devuelva tu API)
-  const porMes = data.reservasPorMes || [];
-  const labelsMes = porMes.map(x => x.mes);
-  const valoresMes = porMes.map(x => x.total);
+    chartSalonMes = new Chart(ctxTurnos, {
+      type: "bar",
+      data: {
+        labels: labelsSalon,
+        datasets: [{
+          label: "Reservas por salón (mes actual)",
+          data: valoresSalon,
+          backgroundColor: gradBar,
+          borderColor: COLORS.barStroke,
+          borderWidth: 2,
+          borderRadius: 8,
+          maxBarThickness: 46
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false }, tooltip: { enabled: true } },
+        scales: {
+          x: { ticks: { color: COLORS.axis }, grid: { display: false } },
+          y: {
+            beginAtZero: true,
+            suggestedMax: suggestedMaxSalon,
+            ticks: {
+              color: COLORS.axis,
+              stepSize: 1,
+              precision: 0,
+              callback: (value) => Number.isInteger(value) ? value : ''
+            },
+            grid: { color: COLORS.grid }
+          }
+        }
+      }
+    });
+  }
 
-  if (chartReservas) chartReservas.destroy();
-  chartReservas = new Chart(ctxReservas, {
-    type: "line",
-    data: {
-      labels: labelsMes,
-      datasets: [{ label: "Reservas por mes", data: valoresMes, tension: 0.3 }]
-    },
-    options: { responsive: true, maintainAspectRatio: false }
-  });
+  const serieMes = data.reservasPorMes
+                || data?.reservas?.porMes
+                || data?.reservas?.ultimos12Meses
+                || [];
+
+  const labelsMes  = serieMes.map(r => r.mes || r.label || `${r.anio ?? ''}-${String(r.nro_mes ?? '').padStart(2,'0')}`.trim());
+  const valoresMes = serieMes.map(r => Number(r.total ?? r.cantidad ?? 0));
+  const maxMes = valoresMes.length ? Math.max(...valoresMes) : 0;
+  const suggestedMaxMes = Math.max(5, maxMes + 1);
+
+  if (chartSerieReservas) chartSerieReservas.destroy();
+  if (!labelsMes.length) wipeCanvas(ctxReservas);
+  else {
+    const gradLine = ctxReservas.createLinearGradient(0, 0, 0, $cvReservas.height);
+    gradLine.addColorStop(0, COLORS.lineFill);
+    gradLine.addColorStop(1, "rgba(255,255,255,0.02)");
+
+    chartSerieReservas = new Chart(ctxReservas, {
+      type: "line",
+      data: {
+        labels: labelsMes,
+        datasets: [{
+          label: "Reservas por mes",
+          data: valoresMes,
+          borderWidth: 3,
+          borderColor: COLORS.lineStroke,
+          backgroundColor: gradLine,
+          pointBackgroundColor: "#ffffff",
+          pointBorderColor: COLORS.pointBorder,
+          pointRadius: 4,
+          fill: true,
+          tension: 0.25
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: {
+          x: { ticks: { color: COLORS.axis }, grid: { display: false } },
+          y: {
+            beginAtZero: true,
+            suggestedMax: suggestedMaxMes,
+            ticks: {
+              color: COLORS.axis,
+              stepSize: 1,
+              precision: 0,
+              callback: (value) => Number.isInteger(value) ? value : ''
+            },
+            grid: { color: COLORS.grid }
+          }
+        }
+      }
+    });
+  }
 }
 
-// =======================================================
-//  CARGA
-// =======================================================
 async function cargar() {
   try {
     const resumenRaw  = await apiGet("/api/v1/dashboard/resumen");
@@ -187,5 +288,3 @@ async function cargar() {
 cargar();
 setInterval(cargar, 60000);
 
-// Utilidades desde consola si expira o querés cambiar el token:
-// sessionStorage.removeItem('dash.token'); location.reload();

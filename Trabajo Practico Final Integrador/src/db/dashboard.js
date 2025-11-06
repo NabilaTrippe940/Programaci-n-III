@@ -1,94 +1,136 @@
 import { conexion } from "../db/conexion.js";
 
-
 const DashboardDB = {
   async obtenerUsuarios() {
     const [filas] = await conexion.query(
-      `SELECT tipo_usuario, COUNT(*) as cantidad FROM usuarios WHERE activo=1 GROUP BY tipo_usuario`
+      `SELECT tipo_usuario, COUNT(*) AS cantidad 
+       FROM usuarios 
+       WHERE activo = 1 
+       GROUP BY tipo_usuario`
     );
     return filas;
   },
 
   async obtenerServicios() {
     const [filas] = await conexion.query(
-      `SELECT COUNT(*) as cantidad FROM servicios WHERE activo=1`
+      `SELECT COUNT(*) AS cantidad 
+       FROM servicios 
+       WHERE activo = 1`
     );
-    return filas[0].cantidad;
+    return filas[0]?.cantidad ?? 0;
   },
 
   async obtenerSalones() {
     const [filas] = await conexion.query(
-      `SELECT COUNT(*) as cantidad FROM salones WHERE activo=1`
+      `SELECT COUNT(*) AS cantidad 
+       FROM salones 
+       WHERE activo = 1`
     );
-    return filas[0].cantidad;
+    return filas[0]?.cantidad ?? 0;
   },
 
   async obtenerTurnosDelDia() {
     const [filas] = await conexion.query(
-      `SELECT COUNT(*) as total FROM turnos WHERE activo=1`
+      `SELECT COUNT(*) AS total 
+       FROM turnos 
+       WHERE activo = 1`
     );
-    return filas[0].total;
-  },
-
-  async obtenerTurnosReservadosHoy() {
-    const [filas] = await conexion.query(
-      `SELECT COUNT(*) as total FROM reservas WHERE fecha_reserva = CURDATE() AND activo=1`
-    );
-    return filas[0].total;
+    return filas[0]?.total ?? 0;
   },
 
   async obtenerReservasHoy() {
     const [filas] = await conexion.query(
-      `SELECT COUNT(*) as total FROM reservas WHERE fecha_reserva = CURDATE() AND activo=1`
+      `SELECT COUNT(*) AS total 
+       FROM reservas 
+       WHERE activo = 1 
+         AND DATE(fecha_reserva) = CURDATE()`
     );
-    return filas[0].total;
+    return filas[0]?.total ?? 0;
   },
 
   async obtenerReservasMes() {
     const [filas] = await conexion.query(
-      `SELECT COUNT(*) as total 
+      `SELECT COUNT(*) AS total 
        FROM reservas 
-       WHERE MONTH(fecha_reserva)=MONTH(CURDATE()) 
-       AND YEAR(fecha_reserva)=YEAR(CURDATE()) 
-       AND activo=1`
+       WHERE activo = 1
+         AND YEAR(fecha_reserva) = YEAR(CURDATE()) 
+         AND MONTH(fecha_reserva) = MONTH(CURDATE())`
     );
-    return filas[0].total;
+    return filas[0]?.total ?? 0;
+  },
+
+  async obtenerKpisReservas() {
+    const [filas] = await conexion.query(
+      `SELECT 
+         SUM(CASE WHEN DATE(fecha_reserva) = CURDATE() THEN 1 ELSE 0 END) AS hoy,
+         SUM(CASE 
+               WHEN YEAR(fecha_reserva) = YEAR(CURDATE()) 
+                AND MONTH(fecha_reserva) = MONTH(CURDATE())
+               THEN 1 ELSE 0 END) AS mes
+       FROM reservas
+       WHERE activo = 1`
+    );
+    const row = filas[0] || {};
+    return { hoy: row.hoy ?? 0, mes: row.mes ?? 0 };
   },
 
   async obtenerReservasProximosDias() {
     const [filas] = await conexion.query(
-      `SELECT r.reserva_id, r.fecha_reserva, s.titulo AS salon, u.nombre AS cliente
+      `SELECT 
+          r.reserva_id, 
+          r.fecha_reserva, 
+          s.titulo AS salon, 
+          u.nombre AS cliente
        FROM reservas r
-       JOIN salones s ON r.salon_id = s.salon_id
-       JOIN usuarios u ON r.usuario_id = u.usuario_id
-       WHERE r.fecha_reserva BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL 5 DAY)
-       ORDER BY r.fecha_reserva ASC`
+       JOIN usuarios u ON u.usuario_id = r.usuario_id AND u.activo = 1
+       JOIN salones  s ON s.salon_id  = r.salon_id  AND s.activo = 1
+       WHERE r.activo = 1
+         AND DATE(r.fecha_reserva) BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL 5 DAY)
+       ORDER BY r.fecha_reserva ASC, r.reserva_id ASC`
     );
     return filas;
   },
 
   async obtenerReservasPorMes() {
     const [filas] = await conexion.query(`
-      SELECT DATE_FORMAT(fecha_reserva, '%b') AS mes, COUNT(*) as total
+      SELECT 
+        DATE_FORMAT(fecha_reserva, '%b') AS mes, 
+        YEAR(fecha_reserva) AS anio,
+        MONTH(fecha_reserva) AS nro_mes,
+        COUNT(*) AS total
       FROM reservas
-      WHERE fecha_reserva >= DATE_SUB(CURDATE(), INTERVAL 3 MONTH)
-      GROUP BY mes
-      ORDER BY fecha_reserva
+      WHERE activo = 1
+        AND fecha_reserva >= DATE_SUB(CURDATE(), INTERVAL 3 MONTH)
+      GROUP BY anio, nro_mes, mes
+      ORDER BY anio, nro_mes
     `);
     return filas;
   },
 
   async obtenerReservasPorSalonMesActual() {
     const [filas] = await conexion.query(`
-      SELECT s.titulo AS salon, COUNT(*) AS total
-      FROM reservas r
-      JOIN salones s ON r.salon_id = s.salon_id
-      WHERE MONTH(r.fecha_reserva) = MONTH(CURDATE())
-      AND YEAR(r.fecha_reserva) = YEAR(CURDATE())
+      SELECT 
+        s.titulo AS salon, 
+        COUNT(r.reserva_id) AS total
+      FROM salones s
+      LEFT JOIN reservas r 
+        ON r.salon_id = s.salon_id 
+       AND r.activo = 1
+       AND YEAR(r.fecha_reserva) = YEAR(CURDATE())
+       AND MONTH(r.fecha_reserva) = MONTH(CURDATE())
+      WHERE s.activo = 1
       GROUP BY s.titulo
+      ORDER BY total DESC, s.titulo ASC
     `);
     return filas;
+  },
+
+  async obtenerTurnosReservadosHoy() {
+    return this.obtenerReservasHoy();
   },
 };
 
 export default DashboardDB;
+
+
+

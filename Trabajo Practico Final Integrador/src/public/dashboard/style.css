@@ -1,90 +1,163 @@
-body {
-  font-family: Arial, sans-serif;
-  margin: 0;
-  background-color: #f8f9fa;
+:root{
+  --bg-start: #0a31ff;      
+  --bg-end:   #8a2be2;      
+  --card:     rgba(255,255,255,0.15);
+  --card-2:   rgba(255,255,255,0.18);
+  --text:     #1b1333;
+  --text-inv: #ffffff;
+  --muted:    #514a6b;
+  --accent:   #ff5bbd;     
+  --accent-2: #ff87d2;
+  --ok:       #29cc97;
+  --warn:     #ffcc00;
+  --shadow:   0 8px 30px rgba(0,0,0,0.20);
+  --radius:   22px;
 }
 
-/* === ENCABEZADO === */
-header {
-  background-color: #0077b6;
-  color: white;
-  text-align: center;
-  padding: 1rem;
+*{ box-sizing: border-box; }
+html,body{ height:100%; margin:0; font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial; color: var(--text-inv); }
+img{ max-width:100%; display:block; }
+
+.page{
+  min-height:100%;
+  background: radial-gradient(1200px 700px at 40% 0%, rgba(255,255,255,0.15), transparent 60%),
+              linear-gradient(135deg, var(--bg-start) 0%, var(--bg-end) 100%);
+  display:flex; flex-direction:column;
 }
 
-/* === ESTRUCTURA PRINCIPAL === */
-main {
-  padding: 1rem;
+/* Header */
+.header{ padding: 36px 28px 8px; text-align:center; }
+.header h1{
+  margin: 0 0 32px;              
+  font-size: clamp(28px, 3vw, 40px);
+  letter-spacing: .5px;
+  font-weight: 800;
+  color: var(--text-inv);
+  text-shadow: 0 2px 12px rgba(0,0,0,.25);
 }
 
-/* === CARDS DE RESUMEN === */
-#resumen {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 1rem;
-  justify-content: space-around;
-}
+/* Layout principal */
+.content{ width:min(1200px, 92vw); margin: 16px auto 48px; display:grid; gap:20px; }
 
-.card {
-  background: white;
-  padding: 1rem;
-  border-radius: 10px;
-  box-shadow: 0 0 5px rgba(0,0,0,0.1);
-  width: 22%;
-  text-align: center;
-  min-width: 240px;
-}
-
-/* === SECCIÓN DE GRÁFICOS === */
-#graficos {
+.grid-cards{
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 1rem;
-  margin-top: 1.5rem;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 20px;
+}
+@media (max-width: 1200px){
+  .grid-cards{ grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 700px){
+  .grid-cards{ grid-template-columns: 1fr; }
 }
 
-#graficoTurnos,
-#graficoReservas {
-  background: white;
-  padding: 1rem;
-  border-radius: 10px;
-  height: 350px; /* 👈 altura visible para Chart.js */
-  box-shadow: 0 0 5px rgba(0,0,0,0.1);
+.grid-cards .card#turnos,
+.grid-cards .card#usuarios,
+.grid-cards .card#catalogo,
+.grid-cards .card#reservas{
+  grid-column: auto !important;
+  grid-row: auto !important;
 }
 
-/* === SECCIÓN DE PRÓXIMAS RESERVAS === */
-#proximas {
-  background: white;
-  padding: 1rem;
-  margin-top: 1.5rem;
-  border-radius: 10px;
-  box-shadow: 0 0 5px rgba(0,0,0,0.1);
+.card{
+  background: var(--card);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255,255,255,0.18);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 18px 20px;
+}
+.card.wide{ padding: 16px 18px 24px; }
+
+.card-title{
+  margin: 0 0 12px;
+  font-size: clamp(18px, 2vw, 22px);
+  font-weight: 800;
+  color: #f3ecff;
+}
+.card-title.center{ text-align:center; }
+
+.card-body{
+  color: #f8f6ff;
+  font-weight: 600;
+  font-size: 1.1rem;     
+  line-height: 1.6;
 }
 
-#proximas h2 {
-  margin-top: 0;
-  color: #0077b6;
+.card li,
+.card p{
+  font-size: 1.1rem !important;   
+  color: #f3ecff;
 }
 
-#listaProximas {
-  list-style: none;
-  padding: 0;
-  margin: 0;
+.card p .hint,
+.card li .hint{
+  font-size: 1em !important;      
+  font-weight: 600;
+  color: #f3ecff;
 }
 
-#listaProximas li {
-  padding: 0.5rem 0;
-  border-bottom: 1px solid #ddd;
+#usuarios .hint{
+  font-size: 1.1rem !important;   
+  font-weight: 700;
+  color: #f3ecff;
 }
 
-#listaProximas li:last-child {
-  border-bottom: none;
+.card strong,
+.card .kpi{
+  font-size: 34px;       
+  font-weight: 800;
+  color: #fff;
+  line-height: 1.2;
 }
 
-/* === PIE DE PÁGINA === */
-footer {
-  text-align: center;
-  color: #666;
-  padding: 1rem 0;
-  font-size: 0.9rem;
+.hint{ font-size:12px; color: rgba(255,255,255,0.8); } 
+.mini{ list-style:none; margin:10px 0 0; padding:0; }
+.mini li{ margin:6px 0; color:#f3ecff; }
+
+.list{ list-style:none; margin:0; padding:0; }
+.list li{
+  padding: 10px 12px;
+  background: var(--card-2);
+  border: 1px solid rgba(255,255,255,.16);
+  border-radius: 12px;
+  margin-bottom: 10px;
 }
+
+.charts{ display:grid; gap:20px; }
+canvas{ width:100% !important; height: 320px !important; }
+
+.footer{ text-align:center; padding: 18px; color: rgba(255,255,255,.85); }
+
+.badge-ok{ color: var(--ok); }
+.badge-warn{ color: var(--warn); }
+.badge-accent{ color: var(--accent-2); }
+
+#listaProximas li{
+  font-size: 1rem;          
+  font-weight: 600;
+  color: #f8f6ff;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+#listaProximas li strong{
+  font-size: 1rem;         
+  font-weight: 700;
+  color: #dcdcf7;           
+}
+
+#listaProximas li span{
+  font-weight: 700;
+  color: #fff;
+}
+
+@media (max-width: 980px){
+  .grid-cards{ grid-template-columns: 1fr 1fr; }
+}
+@media (max-width: 640px){
+  .grid-cards{ grid-template-columns: 1fr; }
+  canvas{ height: 260px !important; }
+}
+

@@ -1,39 +1,119 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
   <title>Dashboard - Reservas de Salones Infantiles</title>
-  <link rel="stylesheet" href="style.css">
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <style>
+    html:not(.auth-ok) body { display: none !important; }
+  </style>
+
+  <script>
+    (function () {
+      try {
+        var p = location.pathname;
+        if (p.endsWith('/dashboard') || p.endsWith('/dashboard ') || /\/dashboard$/.test(p)) {
+          location.replace(p + '/');
+          return; 
+        }
+      } catch (e) {}
+
+      const STORE = window.sessionStorage;
+      const TOKEN_KEY = 'dash.token';
+
+      function readToken()   { return (STORE.getItem(TOKEN_KEY) || '').trim(); }
+      function writeToken(t) { STORE.setItem(TOKEN_KEY, t); }
+      function clearToken()  { STORE.removeItem(TOKEN_KEY); }
+
+      function askToken(force) {
+        if (!force && readToken()) return true;
+        let t = prompt('Ingresar accessToken:') || '';
+        t = t.replace(/^Bearer\s+/i, '').replace(/[\r\n]+/g, '').trim();
+        if (!t) return false;
+        writeToken(t);
+        return true;
+      }
+
+      if (!readToken()) {
+        if (!askToken(true)) {
+          return;
+        }
+      }
+
+      document.documentElement.classList.add('auth-ok');
+
+      window.addEventListener('pageshow', function () {
+        if (!readToken()) { askToken(true); }
+      });
+      setTimeout(function () {
+        if (!readToken() && !document.documentElement.classList.contains('auth-ok')) {
+          askToken(true);
+        }
+      }, 0);
+
+      window.DASH_AUTH = {
+        readToken, writeToken, clearToken,
+        authHeader() { return { Authorization: 'Bearer ' + readToken() }; }
+      };
+    })();
+  </script>
+
+  <link rel="stylesheet" href="style.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js" defer></script>
 </head>
 <body>
-  <header>
-    <h1>Dashboard - Sistema de Reservas de Salones Infantiles</h1>
-  </header>
+  <div class="page">
+    <header class="header">
+      <h1>Dashboard- Gestión de reserva de salones de cumpleaños</h1>
+    </header>
 
-  <main>
-    <section id="resumen">
-      <div class="card" id="usuarios"></div>
-      <div class="card" id="catalogo"></div>
-      <div class="card" id="turnos"></div>
-      <div class="card" id="reservas"></div>
-    </section>
+    <main class="content">
+      <section id="resumen" class="grid-cards">
+        <div class="card" id="usuarios">
+          <h2 class="card-title">Usuarios</h2>
+          <div class="card-body"></div>
+        </div>
 
-    <section id="graficos">
-      <canvas id="graficoTurnos"></canvas>
-      <canvas id="graficoReservas"></canvas>
-    </section>
+        <div class="card" id="catalogo">
+          <h2 class="card-title">Catálogo</h2>
+          <div class="card-body"></div>
+        </div>
 
-    <section id="proximas">
-      <h2>Próximas Reservas (5 días)</h2>
-      <ul id="listaProximas"></ul>
-    </section>
-  </main>
+        <div class="card" id="reservas">
+          <h2 class="card-title">Reservas</h2>
+          <div class="card-body"></div>
+        </div>
 
-  <footer>
-    <p>Facultad de Ciencias de la Administración - UNER</p>
-  </footer>
+        <div class="card" id="turnos">
+          <h2 class="card-title">Turnos (hoy)</h2>
+          <div class="card-body"></div>
+        </div>
+      </section>
 
-  <script src="script.js"></script>
+      <section id="graficos" class="charts">
+        <div class="card wide">
+          <h3 class="card-title center">Reservas por salón (mes actual)</h3>
+          <canvas id="graficoTurnos"></canvas>
+        </div>
+
+        <div class="card wide">
+          <h3 class="card-title center">Reservas por mes</h3>
+          <canvas id="graficoReservas"></canvas>
+        </div>
+      </section>
+
+      <section id="proximas" class="card">
+        <h2 class="card-title">Próximas reservas (5 días)</h2>
+        <ul id="listaProximas" class="list"></ul>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <p>PROG III - UNER</p>
+    </footer>
+  </div>
+
+  <script src="script.js" defer></script>
 </body>
 </html>
+
