@@ -1,3 +1,4 @@
+//Src/V1/Rutas/DashboardRutas.js
 import express from "express";
 import { authenticateJWT } from "../../middlewares/authenticateJWT.js";
 import { permit } from "../../middlewares/roles.js";

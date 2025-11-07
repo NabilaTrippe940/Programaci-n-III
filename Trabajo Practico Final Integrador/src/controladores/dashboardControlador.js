@@ -1,3 +1,4 @@
+//Src/Controladores/DashboardControlador.js
 import DashboardDB from "../db/dashboard.js";
 
 const dashboardControlador = {
@@ -70,4 +71,3 @@ const dashboardControlador = {
 };
 
 export default dashboardControlador;
-

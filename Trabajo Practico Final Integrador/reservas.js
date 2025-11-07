@@ -1,4 +1,4 @@
-//Reservas.js
+//Reservas.js - Notificaciones
 import express from 'express';
 import handlebars from 'handlebars';
 import { readFile } from 'fs/promises';
@@ -12,44 +12,10 @@ import { permit } from './src/middlewares/roles.js';
 
 const router = express.Router();
 
-/**
- * @swagger
- * tags:
- *   name: Notificaciones
- *   description: Envío de notificaciones de reservas por correo
- */
-
-/**
- * @swagger
- * /notificacion:
- *   post:
- *     summary: Envía un correo de notificación de nueva reserva
- *     tags: [Notificaciones]
- *     security:
- *       - bearerAuth: []
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             required: [fecha, titulo, turno, correoDestino]
- *             properties:
- *               fecha: { type: string, example: "2025-10-20" }
- *               titulo: { type: string, example: "Salón Fiesta Feliz" }
- *               turno: { type: string, example: "Mañana" }
- *               correoDestino: { type: string, format: email, example: "cliente@mail.com" }
- *     responses:
- *       200: { description: "Correo enviado con éxito" }
- *       400: { description: "Faltan datos obligatorios o formato inválido" }
- *       404: { description: "Salón no encontrado" }
- *       500: { description: "Error interno del sistema" }
- */
-
 router.post(
   '/',
   authenticateJWT,
-  permit(1, 2), // Solo Admin (1) y Empleado (2)
+  permit(1, 2),
   [
     body("fecha").notEmpty().withMessage("La fecha es obligatoria"),
     body("titulo").notEmpty().withMessage("El título del salón es obligatorio"),
@@ -66,34 +32,14 @@ router.post(
 
     try {
       const [salonExiste] = await conexion.query(
-        'SELECT * FROM salones WHERE titulo=?',
+        'SELECT * FROM salones WHERE titulo = ?',
         [titulo]
       );
-      if (salonExiste.length === 0)
+      if (!salonExiste?.length) {
         return res.status(404).json({ ok: false, mensaje: 'Salón no encontrado.' });
+      }
 
-      const __filename = fileURLToPath(import.meta.url);
-      const __dirname = path.dirname(__filename);
-      const plantillaHbs = path.join(__dirname, './src/utiles/handlebars/plantilla.hbs');
-      const hbsContent = await readFile(plantillaHbs, 'utf-8');
-
-      const html = handlebars.compile(hbsContent)({
-        fecha,
-        titulo,
-        turno,
-        url_ver_reserva: `http://localhost:3000/api/v1/salones/${titulo}`
-      });
-
-      const transporter = nodemailer.createTransport({
-        service: 'gmail',
-        auth: { user: process.env.USER, pass: process.env.PASS }
-      });
-
-      await transporter.sendMail({
-        to: correoDestino,
-        subject: 'Notificación de Reserva',
-        html
-      });
+      await enviarCorreoReservaCliente(correoDestino, { fecha, titulo, turno });
 
       res.json({ ok: true, mensaje: 'Correo enviado con éxito.' });
     } catch (err) {
@@ -104,3 +50,61 @@ router.post(
 );
 
 export default router;
+
+async function generarHTMLCorreo({ fecha, titulo, turno, extra = "" }) {
+  const __filename = fileURLToPath(import.meta.url);
+  const __dirname = path.dirname(__filename);
+  const plantillaPath = path.join(__dirname, './src/utiles/handlebars/plantilla.hbs');
+  const hbsContent = await readFile(plantillaPath, 'utf-8');
+
+  return handlebars.compile(hbsContent)({
+    fecha,
+    titulo,
+    turno,
+    extra,
+    url_ver_reserva: `http://localhost:3000/api/v1/salones/${encodeURIComponent(titulo)}`
+  });
+}
+
+export async function enviarCorreoReservaCliente(correoDestino, { fecha, titulo, turno }) {
+  const html = await generarHTMLCorreo({ fecha, titulo, turno });
+
+  const transporter = nodemailer.createTransport({
+    service: 'gmail',
+    auth: {
+      user: process.env.USER,
+      pass: process.env.PASS
+    }
+  });
+
+  await transporter.sendMail({
+    from: `"Reservas App" <${process.env.USER}>`,
+    to: correoDestino,
+    subject: '📅 Confirmación de Reserva',
+    html
+  });
+}
+
+export async function enviarCorreoNotificacionAdmin(correoDestino, { cliente, fecha, salon, horario, tematica, reserva_id }) {
+  const html = await generarHTMLCorreo({
+    fecha,
+    titulo: salon,
+    turno: horario,
+    extra: `Cliente: ${cliente}<br>Temática: ${tematica}<br>ID Reserva: ${reserva_id}`
+  });
+
+  const transporter = nodemailer.createTransport({
+    service: 'gmail',
+    auth: {
+      user: process.env.USER,
+      pass: process.env.PASS
+    }
+  });
+
+  await transporter.sendMail({
+    from: `"Reservas App" <${process.env.USER}>`,
+    to: correoDestino,
+    subject: '📢 Nueva reserva creada',
+    html
+  });
+}

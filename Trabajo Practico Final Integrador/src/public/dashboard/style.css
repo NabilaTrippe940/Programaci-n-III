@@ -160,20 +160,3 @@ canvas{ width:100% !important; height: 320px !important; }
   .grid-cards{ grid-template-columns: 1fr; }
   canvas{ height: 260px !important; }
 }
-.btn-token{
-  position: fixed;
-  top: 14px;
-  right: 14px;
-  z-index: 9999;
-  padding: 8px 12px;
-  border: 0;
-  border-radius: 10px;
-  background: rgba(255,255,255,.2);
-  backdrop-filter: blur(6px);
-  color: #fff;
-  font-weight: 600;
-  cursor: pointer;
-  box-shadow: 0 6px 18px rgba(0,0,0,.15);
-}
-.btn-token:hover{ background: rgba(255,255,255,.3); }
-
