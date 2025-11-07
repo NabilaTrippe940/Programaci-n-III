@@ -1,3 +1,4 @@
+//Src/Db/Dashboard.js
 import { conexion } from "../db/conexion.js";
 
 const DashboardDB = {
@@ -131,6 +132,3 @@ const DashboardDB = {
 };
 
 export default DashboardDB;
-
-
-

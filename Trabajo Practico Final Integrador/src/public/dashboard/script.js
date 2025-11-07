@@ -287,4 +287,3 @@ async function cargar() {
 
 cargar();
 setInterval(cargar, 60000);
-

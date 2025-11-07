@@ -1,4 +1,4 @@
-// Src/V1/Rutas/ReservasRutas.js
+//Src/V1/Rutas/ReservasRutas.js
 import express from "express";
 import { param, body, validationResult } from "express-validator";
 import ReservasControlador from "../../controladores/reservasControlador.js";

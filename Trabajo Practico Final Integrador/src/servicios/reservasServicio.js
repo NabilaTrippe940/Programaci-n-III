@@ -1,13 +1,9 @@
 //Src/Servicios/ReservasServicio.js
-
 import { conexion } from '../db/conexion.js';
 
 export default class ReservasServicio {
-  constructor() {
-    // Ya no usamos this.reservasDb
-  }
+  constructor() {}
 
-  // Obtener todas las reservas
   buscarReservas = async () => {
     try {
       const [reservas] = await conexion.query('SELECT * FROM reservas WHERE activo = 1');
@@ -18,7 +14,6 @@ export default class ReservasServicio {
     }
   };
 
-  // Obtener reservas por ID
   buscarReservasPorId = async (reserva_id) => {
     try {
       const [reserva] = await conexion.query('SELECT * FROM reservas WHERE reserva_id = ?', [reserva_id]);
@@ -29,7 +24,6 @@ export default class ReservasServicio {
     }
   };
 
-  // Obtener reservas por usuario (para el rol cliente)
   buscarReservasPorUsuario = async (usuario_id) => {
     try {
       const [reservas] = await conexion.query(
@@ -43,7 +37,6 @@ export default class ReservasServicio {
     }
   };
 
-  // Crear una nueva reserva
   crearReservas = async ({ fecha_reserva, salon_id, usuario_id, turno_id, tematica, importe_total, servicios }) => {
     try {
       const sql = `
@@ -72,7 +65,6 @@ export default class ReservasServicio {
     }
   };
 
-  // Modificar una reserva existente
   modificarReservas = async ({ reserva_id, fecha_reserva, turno_id, tematica, importe_total }) => {
     try {
       const [reserva] = await conexion.query(
@@ -80,9 +72,7 @@ export default class ReservasServicio {
         [reserva_id]
       );
 
-      if (!reserva || reserva.length === 0) {
-        return 0; // No existe
-      }
+      if (!reserva?.length) return 0;
 
       const campos = [];
       const valores = [];
@@ -91,28 +81,22 @@ export default class ReservasServicio {
         campos.push('fecha_reserva = ?');
         valores.push(fecha_reserva);
       }
-
       if (turno_id) {
         campos.push('turno_id = ?');
         valores.push(turno_id);
       }
-
       if (tematica) {
         campos.push('tematica = ?');
         valores.push(tematica);
       }
-
       if (importe_total) {
         campos.push('importe_total = ?');
         valores.push(importe_total);
       }
 
-      if (campos.length === 0) {
-        return 0;
-      }
+      if (!campos.length) return 0;
 
       valores.push(reserva_id);
-
       const query = `UPDATE reservas SET ${campos.join(', ')} WHERE reserva_id = ?`;
       const [resultado] = await conexion.query(query, valores);
 
@@ -123,7 +107,6 @@ export default class ReservasServicio {
     }
   };
 
-  // Eliminar (soft delete) una reserva
   eliminarReservas = async (reserva_id) => {
     try {
       const [resultado] = await conexion.query(
@@ -137,7 +120,6 @@ export default class ReservasServicio {
     }
   };
 
-  // Verificar disponibilidad de un salón y turno antes de crear la reserva
   verificarDisponibilidad = async ({ fecha_reserva, salon_id, turno_id }) => {
     try {
       const [resultado] = await conexion.query(
@@ -151,7 +133,6 @@ export default class ReservasServicio {
     }
   };
 
-  // Asociar servicios adicionales a la reserva
   asociarServiciosAReserva = async (reserva_id, servicios) => {
     try {
       const sql = `

@@ -21,7 +21,7 @@ const manejarValidacion = (req, res, next) => {
  *   description: Endpoints de autenticación y gestión de usuarios
  */
 
-// -------------------- REGISTER --------------------
+
 /**
  * @swagger
  * /auth/register:
@@ -287,7 +287,7 @@ router.delete(
 router.post(
   "/admin/crear-usuario",
   authenticateJWT,
-  permit(1), // solo admin
+  permit(1),
   [
     body("nombre").notEmpty().withMessage("El nombre es obligatorio").trim(),
     body("apellido").notEmpty().withMessage("El apellido es obligatorio").trim(),
